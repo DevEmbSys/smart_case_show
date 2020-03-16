@@ -1,0 +1,78 @@
+T30F8 000:123.251   SEGGER J-Link V6.54c Log File
+T30F8 000:123.411   DLL Compiled: Nov  7 2019 17:01:02
+T30F8 000:123.416   Logging started @ 2020-03-13 13:12
+T30F8 000:123.422 JLINK_SetWarnOutHandler(...)
+T30F8 000:123.429 - 0.008ms
+T30F8 000:123.435 JLINK_OpenEx(...)
+T30F8 000:127.766   Firmware: J-Link V10 compiled Jan  7 2020 16:51:47
+T30F8 000:146.026   Hardware: V10.10
+T30F8 000:146.056   S/N: 260106173
+T30F8 000:146.068   OEM: SEGGER
+T30F8 000:146.080   Feature(s): FlashBP, GDB, FlashDL, JFlash, RDI
+T30F8 000:152.373   TELNET listener socket opened on port 19021
+T30F8 000:159.260   WEBSRV Starting webserver
+T30F8 000:159.549   WEBSRV Webserver running on local port 19080
+T30F8 000:159.559 - 36.126ms returns "O.K."
+T30F8 000:159.573 JLINK_GetEmuCaps()
+T30F8 000:159.583 - 0.011ms returns 0xB9FF7BBF
+T30F8 000:159.591 JLINK_TIF_GetAvailable(...)
+T30F8 000:160.005 - 0.431ms
+T30F8 000:160.036 JLINK_SetErrorOutHandler(...)
+T30F8 000:160.045 - 0.013ms
+T30F8 000:160.082 JLINK_ExecCommand("ProjectFile = "F:\RepoNordic\DoseIO\JLinkSettings.ini"", ...). 
+T30F8 000:161.783   Ref file found at: C:\Keil_v5\ARM\Segger\JLinkDevices.ref
+T30F8 000:161.903   XML referenced by ref file: C:\Program Files (x86)\SEGGER\JLink\JLinkDevices.xml
+T30F8 000:163.570   C:\Program Files (x86)\SEGGER\JLink\JLinkDevices.xml evaluated successfully.
+T30F8 000:270.253 - 110.188ms returns 0x00
+T30F8 000:270.310 JLINK_ExecCommand("Device = nRF52832_xxAA", ...). 
+T30F8 000:271.047   Device "NRF52832_XXAA" selected.
+T30F8 000:272.046 - 1.728ms returns 0x00
+T30F8 000:272.057 JLINK_ExecCommand("DisableConnectionTimeout", ...). 
+T30F8 000:272.066 - 0.005ms returns 0x01
+T30F8 000:272.072 JLINK_GetHardwareVersion()
+T30F8 000:272.076 - 0.006ms returns 0x18A88
+T30F8 000:272.082 JLINK_GetDLLVersion()  returns 65403
+T30F8 000:272.095 JLINK_GetFirmwareString(...)
+T30F8 000:272.099 - 0.006ms
+T30F8 000:272.107 JLINK_GetDLLVersion()  returns 65403
+T30F8 000:272.113 JLINK_GetCompileDateTime()
+T30F8 000:272.117 - 0.005ms
+T30F8 000:272.123 JLINK_GetFirmwareString(...)
+T30F8 000:272.127 - 0.006ms
+T30F8 000:272.133 JLINK_GetHardwareVersion()
+T30F8 000:272.136 - 0.006ms returns 0x18A88
+T30F8 000:272.148 JLINK_TIF_Select(JLINKARM_TIF_SWD)
+T30F8 000:275.492 - 3.357ms returns 0x00
+T30F8 000:275.520 JLINK_SetSpeed(50000)
+T30F8 000:276.495 - 0.986ms
+T30F8 000:276.706 JLINK_SetResetType(JLINKARM_RESET_TYPE_NORMAL)
+T30F8 000:276.715 - 0.010ms returns JLINKARM_RESET_TYPE_NORMAL
+T30F8 000:276.720 JLINK_Reset()
+T30F8 000:277.593   InitTarget() start
+T30F8 000:277.611    J-Link Script File: Executing InitTarget()
+T30F8 000:382.983   InitTarget() end
+T30F8 001:623.209   InitTarget() start
+T30F8 001:623.250    J-Link Script File: Executing InitTarget()
+T30F8 001:731.777   InitTarget() end
+T30F8 001:838.233 JLINK_GetId()
+T30F8 001:838.841   InitTarget() start
+T30F8 001:838.855    J-Link Script File: Executing InitTarget()
+T30F8 001:946.611   InitTarget() end
+T30F8 002:124.387   InitTarget() start
+T30F8 002:124.408    J-Link Script File: Executing InitTarget()
+T30F8 002:232.768   InitTarget() end
+T30F8 002:339.233 - 501.026ms   returns 0x00000000
+T30F8 002:339.280 JLINK_GetId()
+T30F8 002:339.914   InitTarget() start
+T30F8 002:339.937    J-Link Script File: Executing InitTarget()
+T30F8 002:448.625   InitTarget() end
+T30F8 002:626.293   InitTarget() start
+T30F8 002:626.324    J-Link Script File: Executing InitTarget()
+T30F8 002:734.897   InitTarget() end
+T30F8 002:841.331 - 502.065ms   returns 0x00000000
+T30F8 002:842.535 JLINK_GetFirmwareString(...)
+T30F8 002:842.547 - 0.014ms
+T30F8 004:004.583 JLINK_Close()
+T30F8 004:005.610 - 1.041ms
+T30F8 004:005.628   
+T30F8 004:005.633   Closed
