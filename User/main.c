@@ -124,6 +124,8 @@ static uint8_t m_adv_handle = BLE_GAP_ADV_SET_HANDLE_NOT_SET;                   
 static uint8_t m_enc_advdata[BLE_GAP_ADV_SET_DATA_SIZE_MAX];                    /**< Buffer for storing an encoded advertising set. */
 static uint8_t m_enc_scan_response_data[BLE_GAP_ADV_SET_DATA_SIZE_MAX];         /**< Buffer for storing an encoded scan data. */
 
+uint8_t ConectedFlag = 0;
+
 /**@brief Struct that contains pointers to the encoded advertising data. */
 static ble_gap_adv_data_t m_adv_data =
 {
@@ -406,6 +408,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_CONNECTED:
+						ConectedFlag = 1;
             //NRF_LOG_INFO("Connected");
             //bsp_board_led_on(CONNECTED_LED);
             //bsp_board_led_off(ADVERTISING_LED);
@@ -420,6 +423,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
+						ConectedFlag = 0;
             //NRF_LOG_INFO("Disconnected");
             //bsp_board_led_off(CONNECTED_LED);
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
@@ -580,10 +584,7 @@ static void power_management_init(void)
  */
 static void idle_state_handle(void)
 {
-		ble_gatts_hvx_params_t params;
-		uint16_t len = sizeof(ADC_DATA_RAW[0][0]);
 		nrf_gpio_pin_set(3);
-		NRFX_DELAY_US(10000);
 		//nrf_drv_saadc_sample();
 	
 		*((volatile uint32_t *)((uint8_t *)NRF_SAADC + (uint32_t)offsetof(NRF_SAADC_Type, TASKS_SAMPLE))) = 0x1UL; // nrf_drv_saadc_sample
@@ -599,23 +600,28 @@ static void idle_state_handle(void)
 //			nrf_gpio_pin_clear(7);
 //		}
 
-    memset(&params, 0, sizeof(params));
-    params.type   = BLE_GATT_HVX_NOTIFICATION;
-    params.handle = m_lbs.button_char_handles.value_handle;
-    params.p_data = (uint8_t*)&ADC_DATA_RAW[0][0];
-    params.p_len  = &len;
+		if(ConectedFlag == 1)
+		{
+			ble_gatts_hvx_params_t params;
+			uint16_t len = sizeof(ADC_DATA_RAW[0][0]);
+			
+			memset(&params, 0, sizeof(params));
+			params.type   = BLE_GATT_HVX_NOTIFICATION;
+			params.handle = m_lbs.button_char_handles.value_handle;
+			params.p_data = (uint8_t*)&ADC_DATA_RAW[0][0];
+			params.p_len  = &len;
 
-    sd_ble_gatts_hvx(m_conn_handle, &params);
+			sd_ble_gatts_hvx(m_conn_handle, &params);
+			
+			memset(&params, 0, sizeof(params));
+			params.type   = BLE_GATT_HVX_NOTIFICATION;
+			params.handle = m_lbs.button_char_handles2.value_handle;
+			params.p_data = (uint8_t*)&ADC_DATA_RAW[0][1];
+			params.p_len  = &len;
+			
+			sd_ble_gatts_hvx(m_conn_handle, &params);
+		}
 		
-		memset(&params, 0, sizeof(params));
-    params.type   = BLE_GATT_HVX_NOTIFICATION;
-    params.handle = m_lbs.button_char_handles2.value_handle;
-    params.p_data = (uint8_t*)&ADC_DATA_RAW[0][1];
-    params.p_len  = &len;
-
-    sd_ble_gatts_hvx(m_conn_handle, &params);
-
-	
     nrf_pwr_mgmt_run();
 }
 
