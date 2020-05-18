@@ -84,7 +84,7 @@
 #define LEDBUTTON_LED                   BSP_BOARD_LED_2                         /**< LED to be toggled with the help of the LED Button Service. */
 #define LEDBUTTON_BUTTON                BSP_BUTTON_0                            /**< Button that will trigger the notification event with the LED Button Service */
 
-#define DEVICE_NAME                     "Empty"                         /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "Empty2"                         /**< Name of device. Will be included in the advertising data. */
 
 #define APP_BLE_OBSERVER_PRIO           3                                       /**< Application's BLE observer priority. You shouldn't need to modify this value. */
 #define APP_BLE_CONN_CFG_TAG            1                                       /**< A tag identifying the SoftDevice BLE configuration. */
@@ -582,10 +582,17 @@ static void power_management_init(void)
  *
  * @details If there is no pending log operation, then sleep until next the next event occurs.
  */
+#define BatVoltag_RawArr_MAX 9
+uint16_t BatVoltag_RawArr[BatVoltag_RawArr_MAX];
+uint8_t BatVoltag_RawArr_count = 0;
 static void idle_state_handle(void)
 {
 		nrf_gpio_pin_set(3);
 		//nrf_drv_saadc_sample();
+		
+		BatVoltag_RawArr[BatVoltag_RawArr_count] = (uint16_t)(((uint32_t)(ADC_DATA_RAW[0][1]*720))/1024);
+		BatVoltag_RawArr_count++;
+		if(BatVoltag_RawArr_count >= BatVoltag_RawArr_MAX)BatVoltag_RawArr_count = 0;
 	
 		*((volatile uint32_t *)((uint8_t *)NRF_SAADC + (uint32_t)offsetof(NRF_SAADC_Type, TASKS_SAMPLE))) = 0x1UL; // nrf_drv_saadc_sample
 	
@@ -603,8 +610,10 @@ static void idle_state_handle(void)
 		if(ConectedFlag == 1)
 		{
 			ble_gatts_hvx_params_t params;
-			uint16_t len = sizeof(ADC_DATA_RAW[0][0]);
+			uint16_t BatVoltag = 0;
+			uint16_t len = 0;
 			
+			len = sizeof(ADC_DATA_RAW[0][0]);
 			memset(&params, 0, sizeof(params));
 			params.type   = BLE_GATT_HVX_NOTIFICATION;
 			params.handle = m_lbs.button_char_handles.value_handle;
@@ -613,10 +622,23 @@ static void idle_state_handle(void)
 
 			sd_ble_gatts_hvx(m_conn_handle, &params);
 			
+			for(uint8_t i = 0; i < 5; i++)
+			{
+				uint16_t BatVoltagMinCount = BatVoltag_RawArr[0];
+				for(uint8_t j = 0; j < BatVoltag_RawArr_MAX; j++)
+				{
+					if(BatVoltag_RawArr[j] >= BatVoltag && BatVoltagMinCount < BatVoltag_RawArr[j] && BatVoltag_RawArr[j] != 0)
+					{
+						BatVoltagMinCount = BatVoltag_RawArr[j];
+					}
+				}
+				BatVoltag = BatVoltagMinCount;
+			}
+			len = sizeof(BatVoltag);
 			memset(&params, 0, sizeof(params));
 			params.type   = BLE_GATT_HVX_NOTIFICATION;
 			params.handle = m_lbs.button_char_handles2.value_handle;
-			params.p_data = (uint8_t*)&ADC_DATA_RAW[0][1];
+			params.p_data = (uint8_t*)&BatVoltag;
 			params.p_len  = &len;
 			
 			sd_ble_gatts_hvx(m_conn_handle, &params);
@@ -723,6 +745,40 @@ void saadc_init(void)
 		*((volatile uint32_t *)((uint8_t *)NRF_SAADC + (uint32_t)offsetof(NRF_SAADC_Type, TASKS_START))) = 0x1UL;
 }
 
+// This function initializes timer 3 with the following configuration:
+// 24-bit, base frequency 16 MHz, auto clear on COMPARE5 match (CC5 = TIMER_RELOAD)
+void timer_init()
+{
+    NRF_TIMER3->BITMODE                 = TIMER_BITMODE_BITMODE_24Bit << TIMER_BITMODE_BITMODE_Pos;
+    NRF_TIMER3->PRESCALER               = 8000;
+    NRF_TIMER3->SHORTS                  = TIMER_SHORTS_COMPARE0_CLEAR_Msk << 5;
+    NRF_TIMER3->MODE                    = TIMER_MODE_MODE_Timer << TIMER_MODE_MODE_Pos;
+    NRF_TIMER3->CC[5] = 1024;    
+}
+
+// Starts TIMER3
+void timer_start()
+{
+    NRF_TIMER3->TASKS_START = 1;
+}
+
+// This function sets up TIMER3, the PPI and the GPIOTE modules to configure a single PWM channel
+// Timer CC num, PPI channel nums and GPIOTE channel num is defined at the top of this file
+void pwm_init(uint32_t pinselect)
+{  
+    NRF_GPIOTE->CONFIG[0] = GPIOTE_CONFIG_MODE_Task << GPIOTE_CONFIG_MODE_Pos | 
+                                         GPIOTE_CONFIG_POLARITY_Toggle << GPIOTE_CONFIG_POLARITY_Pos | 
+                                         pinselect << GPIOTE_CONFIG_PSEL_Pos | 
+                                         GPIOTE_CONFIG_OUTINIT_High << GPIOTE_CONFIG_OUTINIT_Pos;
+
+    NRF_PPI->CH[0].EEP = (uint32_t)&NRF_TIMER3->EVENTS_COMPARE[0];
+    NRF_PPI->CH[0].TEP = (uint32_t)&NRF_GPIOTE->TASKS_CLR[0];
+    NRF_PPI->CH[1].EEP = (uint32_t)&NRF_TIMER3->EVENTS_COMPARE[0];
+    NRF_PPI->CH[1].TEP = (uint32_t)&NRF_GPIOTE->TASKS_SET[0];
+    
+    NRF_PPI->CHENSET               = (1 << 0) | (1 << 1);
+}
+
 /**@brief Function for application main entry.
  */
 int main(void)
@@ -757,6 +813,12 @@ int main(void)
 								  | (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos);
 									
 		nrf_gpio_pin_clear(30);
+		
+		timer_init();
+		pwm_init(12);
+		timer_start();
+		
+		NRF_TIMER3->CC[0] = 512;
 
     // Enter main loop.
     for (;;)
