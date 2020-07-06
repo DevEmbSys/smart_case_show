@@ -79,6 +79,8 @@
 #include "nrf_svci_async_function.h"
 #include "nrf_svci_async_handler.h"
 
+#include "nrf_calendar.h"
+
 #define ADVERTISING_LED                 BSP_BOARD_LED_0                         /**< Is on when device is advertising. */
 #define CONNECTED_LED                   BSP_BOARD_LED_1                         /**< Is on when device has connected. */
 #define LEDBUTTON_LED                   BSP_BOARD_LED_2                         /**< LED to be toggled with the help of the LED Button Service. */
@@ -125,6 +127,19 @@ static uint8_t m_enc_advdata[BLE_GAP_ADV_SET_DATA_SIZE_MAX];                    
 static uint8_t m_enc_scan_response_data[BLE_GAP_ADV_SET_DATA_SIZE_MAX];         /**< Buffer for storing an encoded scan data. */
 
 uint8_t ConectedFlag = 0;
+
+uint16_t OPEN_DATA_SET_THRESHOLD = 0x300;
+
+#define BatVoltag_RawArr_MAX 9
+uint16_t BatVoltag_RawArr[BatVoltag_RawArr_MAX];
+uint8_t BatVoltag_RawArr_count = 0;
+
+#define ADC_DATA_Arr_MAX 20
+uint8_t ADC_DATA_Arr_count = 0;
+uint16_t ADC_DATA_Arr[ADC_DATA_Arr_MAX] = {0};
+uint16_t ADC_DATA_AVERAGE = 0, ADC_DATA_AVERAGE_LOW = 0, ADC_DATA_AVERAGE_HIGH = 0;
+uint32_t ADC_DATA_SUMM = 0;
+uint16_t OPEN_DATA_HYST = 2;
 
 /**@brief Struct that contains pointers to the encoded advertising data. */
 static ble_gap_adv_data_t m_adv_data =
@@ -290,13 +305,11 @@ static void led_write_handler(uint16_t conn_handle, ble_lbs_t * p_lbs, uint8_t l
 {
     if (led_state)
     {
-        nrf_gpio_pin_set(7);
-				nrf_gpio_pin_set(8);
+        OPEN_DATA_SET_THRESHOLD = ADC_DATA_AVERAGE;
     }
     else
     {
-				nrf_gpio_pin_clear(7);
-				nrf_gpio_pin_clear(8);
+				OPEN_DATA_SET_THRESHOLD = ADC_DATA_AVERAGE;
     }
 }
 
@@ -582,9 +595,7 @@ static void power_management_init(void)
  *
  * @details If there is no pending log operation, then sleep until next the next event occurs.
  */
-#define BatVoltag_RawArr_MAX 9
-uint16_t BatVoltag_RawArr[BatVoltag_RawArr_MAX];
-uint8_t BatVoltag_RawArr_count = 0;
+
 static void idle_state_handle(void)
 {
 		nrf_gpio_pin_set(3);
@@ -606,6 +617,25 @@ static void idle_state_handle(void)
 //		{
 //			nrf_gpio_pin_clear(7);
 //		}
+	
+		ADC_DATA_Arr[ADC_DATA_Arr_count] = ADC_DATA_RAW[0][0];
+		ADC_DATA_SUMM += ADC_DATA_RAW[0][0];
+		ADC_DATA_Arr_count++;
+		if(ADC_DATA_Arr_count >= ADC_DATA_Arr_MAX)
+		{
+			ADC_DATA_AVERAGE = ADC_DATA_SUMM / ADC_DATA_Arr_count; 
+			ADC_DATA_SUMM = 0;
+			ADC_DATA_Arr_count = 0;
+		}
+		
+		if(ADC_DATA_AVERAGE < OPEN_DATA_SET_THRESHOLD - OPEN_DATA_HYST)
+		{
+			nrf_gpio_pin_set(7);
+		}
+		else if(ADC_DATA_AVERAGE > OPEN_DATA_SET_THRESHOLD)
+		{
+			nrf_gpio_pin_clear(7);
+		}
 
 		if(ConectedFlag == 1)
 		{
@@ -617,7 +647,7 @@ static void idle_state_handle(void)
 			memset(&params, 0, sizeof(params));
 			params.type   = BLE_GATT_HVX_NOTIFICATION;
 			params.handle = m_lbs.button_char_handles.value_handle;
-			params.p_data = (uint8_t*)&ADC_DATA_RAW[0][0];
+			params.p_data = (uint8_t*)&ADC_DATA_AVERAGE;
 			params.p_len  = &len;
 
 			sd_ble_gatts_hvx(m_conn_handle, &params);
@@ -779,10 +809,21 @@ void pwm_init(uint32_t pinselect)
     NRF_PPI->CHENSET               = (1 << 0) | (1 << 1);
 }
 
+void calendar_updated()
+{
+	
+}
+
 /**@brief Function for application main entry.
  */
 int main(void)
 {
+		NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
+    NRF_CLOCK->TASKS_HFCLKSTART = 1;
+    while(NRF_CLOCK->EVENTS_HFCLKSTARTED == 0);
+	
+		nrf_cal_init();
+		nrf_cal_set_callback(calendar_updated, 4);
     // Initialize.
     log_init();
     leds_init();
