@@ -22,7 +22,7 @@
 #define CAL_RTC                 NRF_RTC2
 #define CAL_RTC_IRQn            RTC2_IRQn
 #define CAL_RTC_IRQHandler      RTC2_IRQHandler
-#define CAL_RTC_IRQ_Priority    APP_TIMER_CONFIG_IRQ_PRIORITY
+#define CAL_RTC_IRQ_Priority    1
 
 // Initializes the calendar library. Run this before calling any other functions. 
 void nrf_cal_init(void);

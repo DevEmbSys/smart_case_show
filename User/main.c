@@ -141,6 +141,28 @@ uint16_t ADC_DATA_AVERAGE = 0, ADC_DATA_AVERAGE_LOW = 0, ADC_DATA_AVERAGE_HIGH =
 uint32_t ADC_DATA_SUMM = 0;
 uint16_t OPEN_DATA_HYST = 2;
 
+struct tm* tm_data = 0;
+
+#define JournalLengthMax 60*60
+typedef enum{
+	EVENT_NONE = 0, 				// пустое событие
+	EVENT_SET_NOTIFICATION,	// установка оповещения
+	EVENT_GET_NEW_EVENT,		// получение новых событий
+	EVENT_CASE_OPEN,
+	EVENT_CASE_CLOSE,
+	EVENT_NOTIFICATION_ACTIVE,
+	EVENT_NOTIFICATION_DONE,
+}e_TypeEvent;
+
+typedef struct __attribute__ ((aligned(32))){
+	time_t 				Time;
+	uint32_t			Value:16;
+	e_TypeEvent		TypeEvent;
+}s_Journal;
+
+s_Journal Journal[JournalLengthMax];
+uint32_t JournalPointer = 0;
+
 /**@brief Struct that contains pointers to the encoded advertising data. */
 static ble_gap_adv_data_t m_adv_data =
 {
@@ -643,11 +665,13 @@ static void idle_state_handle(void)
 			uint16_t BatVoltag = 0;
 			uint16_t len = 0;
 			
+			tm_data = nrf_cal_get_time();
+			
 			len = sizeof(ADC_DATA_RAW[0][0]);
 			memset(&params, 0, sizeof(params));
 			params.type   = BLE_GATT_HVX_NOTIFICATION;
 			params.handle = m_lbs.button_char_handles.value_handle;
-			params.p_data = (uint8_t*)&ADC_DATA_AVERAGE;
+			params.p_data = (uint8_t*)&tm_data->tm_sec;
 			params.p_len  = &len;
 
 			sd_ble_gatts_hvx(m_conn_handle, &params);
@@ -859,7 +883,11 @@ int main(void)
 		pwm_init(12);
 		timer_start();
 		
-		NRF_TIMER3->CC[0] = 512;
+		//NRF_TIMER3->CC[0] = 512;
+		
+		nrf_cal_set_time(2020,07,06,18,00,00);
+		
+		//Journal[0].Time = 1;
 
     // Enter main loop.
     for (;;)
