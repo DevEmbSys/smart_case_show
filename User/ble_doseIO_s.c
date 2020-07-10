@@ -13,11 +13,9 @@ static void on_write(ble_doseIO_t * p_doseIO, ble_evt_t const * p_ble_evt)
 {
     ble_gatts_evt_write_t const * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 
-    if (   (p_evt_write->handle == p_doseIO->led_char_handles.value_handle)
-        && (p_evt_write->len == 1)
-        && (p_doseIO->led_write_handler != NULL))
+    if (p_evt_write->handle == p_doseIO->synch_time_char_handles.value_handle)
     {
-        p_doseIO->led_write_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO, p_evt_write->data[0]);
+        p_doseIO->synch_time_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO, p_evt_write->data[0]);
     }
 }
 
@@ -46,7 +44,7 @@ uint32_t ble_doseIO_init(ble_doseIO_t * p_doseIO, const ble_doseIO_init_t * p_do
     ble_add_char_params_t add_char_params;
 
     // Initialize service structure.
-    p_doseIO->led_write_handler = p_doseIO_init->led_write_handler;
+    p_doseIO->synch_time_handler = p_doseIO_init->synch_time_handler;
 
     // Add service.
     ble_uuid128_t base_uuid = {doseIO_UUID_BASE};
@@ -119,17 +117,17 @@ uint32_t ble_doseIO_init(ble_doseIO_t * p_doseIO, const ble_doseIO_init_t * p_do
 
     // Add LED characteristic.
     memset(&add_char_params, 0, sizeof(add_char_params));
-    add_char_params.uuid             = doseIO_UUID_LED_CHAR;
+    add_char_params.uuid             = doseIO_UUID_SYNCH_TIME_CHAR;
     add_char_params.uuid_type        = p_doseIO->uuid_type;
-    add_char_params.init_len         = sizeof(uint8_t);
-    add_char_params.max_len          = sizeof(uint8_t);
+    add_char_params.init_len         = sizeof(uint32_t);
+    add_char_params.max_len          = sizeof(uint32_t);
     add_char_params.char_props.read  = 1;
     add_char_params.char_props.write = 1;
 
     add_char_params.read_access  = SEC_OPEN;
     add_char_params.write_access = SEC_OPEN;
 
-    return characteristic_add(p_doseIO->service_handle, &add_char_params, &p_doseIO->led_char_handles);
+    return characteristic_add(p_doseIO->service_handle, &add_char_params, &p_doseIO->synch_time_char_handles);
 }
 
 

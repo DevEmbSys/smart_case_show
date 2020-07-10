@@ -324,16 +324,9 @@ static void nrf_qwr_error_handler(uint32_t nrf_error)
  * @param[in] p_doseIO     Instance of doseIO Service to which the write applies.
  * @param[in] led_state Written/desired state of the LED.
  */
-static void led_write_handler(uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint8_t led_state)
+static void synch_time_handler(uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data)
 {
-    if (led_state)
-    {
-        OPEN_DATA_SET_THRESHOLD = ADC_DATA_AVERAGE;
-    }
-    else
-    {
-				OPEN_DATA_SET_THRESHOLD = ADC_DATA_AVERAGE;
-    }
+	nrf_cal_set_time_Unix(data);
 }
 
 
@@ -353,7 +346,7 @@ static void services_init(void)
     APP_ERROR_CHECK(err_code);
 
     // Initialize doseIO.
-    init.led_write_handler = led_write_handler;
+    init.synch_time_handler = synch_time_handler;
 
     err_code = ble_doseIO_init(&m_doseIO, &init);
     APP_ERROR_CHECK(err_code);
