@@ -575,11 +575,6 @@
               <FileType>1</FileType>
               <FilePath>.\components\libraries\util\app_error_handler_keil.c</FilePath>
             </File>
-            <File>
-              <FileName>app_button.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\components\libraries\button\app_button.c</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>

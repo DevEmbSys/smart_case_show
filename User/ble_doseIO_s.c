@@ -6,7 +6,7 @@
 
 /**@brief Function for handling the Write event.
  *
- * @param[in] p_doseIO      LED Button Service structure.
+ * @param[in] p_doseIO      doseIO Service structure.
  * @param[in] p_ble_evt  Event received from the BLE stack.
  */
 static void on_write(ble_doseIO_t * p_doseIO, ble_evt_t const * p_ble_evt)

@@ -408,14 +408,14 @@
 
 // </e>
 
-// <q> BLE_doseIO_C_ENABLED  - ble_doseIO_c - Nordic LED Button Service Client
+// <q> BLE_doseIO_C_ENABLED  - ble_doseIO_c - Nordic doseIO Service Client
  
 
 #ifndef BLE_doseIO_C_ENABLED
 #define BLE_doseIO_C_ENABLED 0
 #endif
 
-// <q> BLE_doseIO_ENABLED  - ble_doseIO - LED Button Service
+// <q> BLE_doseIO_ENABLED  - ble_doseIO - doseIO Service
  
 
 #ifndef BLE_doseIO_ENABLED
@@ -11460,14 +11460,14 @@
 #endif
 
 // <o> BLE_doseIO_BLE_OBSERVER_PRIO  
-// <i> Priority with which BLE events are dispatched to the LED Button Service.
+// <i> Priority with which BLE events are dispatched to the doseIO Service.
 
 #ifndef BLE_doseIO_BLE_OBSERVER_PRIO
 #define BLE_doseIO_BLE_OBSERVER_PRIO 2
 #endif
 
 // <o> BLE_doseIO_C_BLE_OBSERVER_PRIO  
-// <i> Priority with which BLE events are dispatched to the LED Button Service Client.
+// <i> Priority with which BLE events are dispatched to the doseIO Service Client.
 
 #ifndef BLE_doseIO_C_BLE_OBSERVER_PRIO
 #define BLE_doseIO_C_BLE_OBSERVER_PRIO 2

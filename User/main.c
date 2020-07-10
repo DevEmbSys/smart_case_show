@@ -40,7 +40,7 @@
 /**
  * @brief Blinky Sample Application main file.
  *
- * This file contains the source code for a sample server application using the LED Button service.
+ * This file contains the source code for a sample server application using the doseIO service.
  */
 
 #include <stdint.h>
@@ -84,8 +84,8 @@
 
 #define ADVERTISING_LED                 BSP_BOARD_LED_0                         /**< Is on when device is advertising. */
 #define CONNECTED_LED                   BSP_BOARD_LED_1                         /**< Is on when device has connected. */
-#define LEDBUTTON_LED                   BSP_BOARD_LED_2                         /**< LED to be toggled with the help of the LED Button Service. */
-#define LEDBUTTON_BUTTON                BSP_BUTTON_0                            /**< Button that will trigger the notification event with the LED Button Service */
+#define LEDBUTTON_LED                   BSP_BOARD_LED_2                         /**< LED to be toggled with the help of the doseIO Service. */
+#define LEDBUTTON_BUTTON                BSP_BUTTON_0                            /**< Button that will trigger the notification event with the doseIO Service */
 
 #define DEVICE_NAME                     "Empty2"                         /**< Name of device. Will be included in the advertising data. */
 
@@ -117,7 +117,7 @@ static int16_t     ADC_DATA_RAW[2][SAMPLES_IN_BUFFER];
 //static nrf_ppi_channel_t     m_ppi_channel;
 static uint32_t              m_adc_evt_counter;
 
-BLE_doseIO_DEF(m_doseIO);                                                             /**< LED Button Service instance. */
+BLE_doseIO_DEF(m_doseIO);                                                             /**< doseIO Service instance. */
 NRF_BLE_GATT_DEF(m_gatt);                                                       /**< GATT module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                                         /**< Context for the Queued Write module.*/
 
@@ -321,7 +321,7 @@ static void nrf_qwr_error_handler(uint32_t nrf_error)
 
 /**@brief Function for handling write events to the LED characteristic.
  *
- * @param[in] p_doseIO     Instance of LED Button Service to which the write applies.
+ * @param[in] p_doseIO     Instance of doseIO Service to which the write applies.
  * @param[in] led_state Written/desired state of the LED.
  */
 static void led_write_handler(uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint8_t led_state)
@@ -451,7 +451,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
             err_code = nrf_ble_qwr_conn_handle_assign(&m_qwr, m_conn_handle);
             APP_ERROR_CHECK(err_code);
-            err_code = app_button_enable();
+            //err_code = app_button_enable();
             APP_ERROR_CHECK(err_code);
 						nrf_gpio_pin_set(8);
 						NRFX_DELAY_US(100000);
@@ -463,7 +463,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             //NRF_LOG_INFO("Disconnected");
             //bsp_board_led_off(CONNECTED_LED);
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
-            err_code = app_button_disable();
+            //err_code = app_button_disable();
             APP_ERROR_CHECK(err_code);
             advertising_start();
 						nrf_gpio_pin_set(7);

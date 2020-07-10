@@ -61,7 +61,7 @@ NRF_LOG_MODULE_REGISTER();
  * missed. Module relies on interrupt from GPIOTE only to active periodic app_timer in which pin
  * is sampled. Timer is stopped when there is no active buttons (all buttons are in idle state).
  *
- * Transition to the new state is based on currently sampled button value. State machine has
+ * Transition to the new state is based on currently sampdoseIO value. State machine has
  * following transitions:
  *
  * -----------------------------------------------------
