@@ -408,18 +408,18 @@
 
 // </e>
 
-// <q> BLE_LBS_C_ENABLED  - ble_lbs_c - Nordic LED Button Service Client
+// <q> BLE_doseIO_C_ENABLED  - ble_doseIO_c - Nordic LED Button Service Client
  
 
-#ifndef BLE_LBS_C_ENABLED
-#define BLE_LBS_C_ENABLED 0
+#ifndef BLE_doseIO_C_ENABLED
+#define BLE_doseIO_C_ENABLED 0
 #endif
 
-// <q> BLE_LBS_ENABLED  - ble_lbs - LED Button Service
+// <q> BLE_doseIO_ENABLED  - ble_doseIO - LED Button Service
  
 
-#ifndef BLE_LBS_ENABLED
-#define BLE_LBS_ENABLED 1
+#ifndef BLE_doseIO_ENABLED
+#define BLE_doseIO_ENABLED 1
 #endif
 
 // <q> BLE_LLS_ENABLED  - ble_lls - Link Loss Service
@@ -11459,18 +11459,18 @@
 #define BLE_IAS_C_BLE_OBSERVER_PRIO 2
 #endif
 
-// <o> BLE_LBS_BLE_OBSERVER_PRIO  
+// <o> BLE_doseIO_BLE_OBSERVER_PRIO  
 // <i> Priority with which BLE events are dispatched to the LED Button Service.
 
-#ifndef BLE_LBS_BLE_OBSERVER_PRIO
-#define BLE_LBS_BLE_OBSERVER_PRIO 2
+#ifndef BLE_doseIO_BLE_OBSERVER_PRIO
+#define BLE_doseIO_BLE_OBSERVER_PRIO 2
 #endif
 
-// <o> BLE_LBS_C_BLE_OBSERVER_PRIO  
+// <o> BLE_doseIO_C_BLE_OBSERVER_PRIO  
 // <i> Priority with which BLE events are dispatched to the LED Button Service Client.
 
-#ifndef BLE_LBS_C_BLE_OBSERVER_PRIO
-#define BLE_LBS_C_BLE_OBSERVER_PRIO 2
+#ifndef BLE_doseIO_C_BLE_OBSERVER_PRIO
+#define BLE_doseIO_C_BLE_OBSERVER_PRIO 2
 #endif
 
 // <o> BLE_LLS_BLE_OBSERVER_PRIO  

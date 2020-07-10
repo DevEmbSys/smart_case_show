@@ -431,9 +431,9 @@
           <GroupName>nRF_BLE_Services</GroupName>
           <Files>
             <File>
-              <FileName>ble_lbs.c</FileName>
+              <FileName>ble_doseIO_s.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\components\ble\ble_services\ble_lbs\ble_lbs.c</FilePath>
+              <FilePath>.\User\ble_doseIO_s.c</FilePath>
             </File>
           </Files>
         </Group>

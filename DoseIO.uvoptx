@@ -150,7 +150,7 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>883</LineNumber>
+          <LineNumber>884</LineNumber>
           <EnabledFlag>1</EnabledFlag>
           <Address>0</Address>
           <ByteObject>0</ByteObject>
@@ -362,8 +362,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\components\ble\ble_services\ble_lbs\ble_lbs.c</PathWithFileName>
-      <FilenameWithoutPath>ble_lbs.c</FilenameWithoutPath>
+      <PathWithFileName>.\User\ble_doseIO_s.c</PathWithFileName>
+      <FilenameWithoutPath>ble_doseIO_s.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

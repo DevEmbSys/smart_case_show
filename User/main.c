@@ -59,7 +59,8 @@
 //#include "boards.h"
 #include "app_timer.h"
 #include "app_button.h"
-#include "ble_lbs.h"
+//#include "ble_doseIO.h"
+#include "ble_doseIO_s.h"
 #include "nrf_ble_gatt.h"
 #include "nrf_ble_qwr.h"
 #include "nrf_pwr_mgmt.h"
@@ -116,7 +117,7 @@ static int16_t     ADC_DATA_RAW[2][SAMPLES_IN_BUFFER];
 //static nrf_ppi_channel_t     m_ppi_channel;
 static uint32_t              m_adc_evt_counter;
 
-BLE_LBS_DEF(m_lbs);                                                             /**< LED Button Service instance. */
+BLE_doseIO_DEF(m_doseIO);                                                             /**< LED Button Service instance. */
 NRF_BLE_GATT_DEF(m_gatt);                                                       /**< GATT module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                                         /**< Context for the Queued Write module.*/
 
@@ -268,7 +269,7 @@ static void advertising_init(void)
     ble_advdata_t advdata;
     ble_advdata_t srdata;
 
-    ble_uuid_t adv_uuids[] = {{LBS_UUID_SERVICE, m_lbs.uuid_type}};
+    ble_uuid_t adv_uuids[] = {{doseIO_UUID_SERVICE, m_doseIO.uuid_type}};
 
     // Build and set advertising data.
     memset(&advdata, 0, sizeof(advdata));
@@ -320,10 +321,10 @@ static void nrf_qwr_error_handler(uint32_t nrf_error)
 
 /**@brief Function for handling write events to the LED characteristic.
  *
- * @param[in] p_lbs     Instance of LED Button Service to which the write applies.
+ * @param[in] p_doseIO     Instance of LED Button Service to which the write applies.
  * @param[in] led_state Written/desired state of the LED.
  */
-static void led_write_handler(uint16_t conn_handle, ble_lbs_t * p_lbs, uint8_t led_state)
+static void led_write_handler(uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint8_t led_state)
 {
     if (led_state)
     {
@@ -341,7 +342,7 @@ static void led_write_handler(uint16_t conn_handle, ble_lbs_t * p_lbs, uint8_t l
 static void services_init(void)
 {
     uint32_t         err_code;
-    ble_lbs_init_t     init     = {0};
+    ble_doseIO_init_t     init     = {0};
     nrf_ble_qwr_init_t qwr_init = {0};
 		ble_dfu_buttonless_init_t dfus_init = {0};
 
@@ -351,10 +352,10 @@ static void services_init(void)
     err_code = nrf_ble_qwr_init(&m_qwr, &qwr_init);
     APP_ERROR_CHECK(err_code);
 
-    // Initialize LBS.
+    // Initialize doseIO.
     init.led_write_handler = led_write_handler;
 
-    err_code = ble_lbs_init(&m_lbs, &init);
+    err_code = ble_doseIO_init(&m_doseIO, &init);
     APP_ERROR_CHECK(err_code);
 		
 		err_code = ble_dfu_buttonless_init(&dfus_init);
@@ -559,7 +560,7 @@ static void button_event_handler(uint8_t pin_no, uint8_t button_action)
 //    {
 //        case LEDBUTTON_BUTTON:
 //            //NRF_LOG_INFO("Send button state change.");
-//            err_code = ble_lbs_on_button_change(m_conn_handle, &m_lbs, button_action);
+//            err_code = ble_doseIO_on_button_change(m_conn_handle, &m_doseIO, button_action);
 //            if (err_code != NRF_SUCCESS &&
 //                err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
 //                err_code != NRF_ERROR_INVALID_STATE &&
@@ -670,7 +671,7 @@ static void idle_state_handle(void)
 			len = sizeof(ADC_DATA_RAW[0][0]);
 			memset(&params, 0, sizeof(params));
 			params.type   = BLE_GATT_HVX_NOTIFICATION;
-			params.handle = m_lbs.button_char_handles.value_handle;
+			params.handle = m_doseIO.button_char_handles.value_handle;
 			params.p_data = (uint8_t*)&tm_data->tm_sec;
 			params.p_len  = &len;
 
@@ -691,7 +692,7 @@ static void idle_state_handle(void)
 			len = sizeof(BatVoltag);
 			memset(&params, 0, sizeof(params));
 			params.type   = BLE_GATT_HVX_NOTIFICATION;
-			params.handle = m_lbs.button_char_handles2.value_handle;
+			params.handle = m_doseIO.button_char_handles2.value_handle;
 			params.p_data = (uint8_t*)&BatVoltag;
 			params.p_len  = &len;
 			
