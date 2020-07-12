@@ -23,36 +23,46 @@ NRF_SDH_BLE_OBSERVER(_name ## _obs,                                             
                      ble_doseIO_on_ble_evt, &_name)
 	
 //15f2e42e-c26d-11ea-b3de-0242ac130004
-#define doseIO_UUID_BASE					{0x04, 0x00, 0x13, 0xac, 0x42, 0x02, 0xde, 0xb3, \
-																	 0xea, 0x11, 0x6d, 0xc2, 0x2e, 0xe4, 0xf2, 0x15}
+//a3361c02-c475-11ea-87d0-0242ac130003
+//#define doseIO_UUID_BASE					{0x04, 0x00, 0x13, 0xac, 0x42, 0x02, 0xde, 0xb3, \
+//																	 0xea, 0x11, 0x6d, 0xc2, 0x2e, 0xe4, 0xf2, 0x15}
+	
+	#define doseIO_UUID_BASE					{0x03, 0x00, 0x13, 0xac, 0x42, 0x02, 0xd0, 0x87, \
+																	 0xea, 0x11, 0x75, 0xc4, 0x02, 0x1c, 0x36, 0xa3}
 						
-#define doseIO_UUID_SERVICE     				0xc9d0
-#define doseIO_UUID_BUTTON_CHAR 				0xc9d1
-#define doseIO_UUID_BUTTON_CHAR2 				0xc9d2
-#define doseIO_UUID_SYNCH_TIME_CHAR    	0xc9d3
+#define doseIO_UUID_SERVICE     				0xab00
+#define doseIO_UUID_SYNCH_TIME_CHAR    	0xab01
+#define doseIO_UUID_SET_NOTIF_CHAR    	0xab02
+#define doseIO_UUID_BUTTON_CHAR 				0xab03
+#define doseIO_UUID_BUTTON_CHAR2 				0xab04
+
 
 
 // Forward declaration of the ble_doseIO_t type.
 typedef struct ble_doseIO_s ble_doseIO_t;
 
 typedef void (*ble_doseIO_synch_time_handler_t) (uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data);
+typedef void (*ble_doseIO_set_notif_handler_t) (uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data);
 
 /** @brief doseIO Service init structure. This structure contains all options and data needed for
  *        initialization of the service.*/
 typedef struct
 {
-    ble_doseIO_synch_time_handler_t synch_time_handler; /**< Event handler to be called when the LED Characteristic is written. */
+    ble_doseIO_synch_time_handler_t synch_time_handler; /**< Event handler to be called when the synch_time Characteristic is written. */
+		ble_doseIO_set_notif_handler_t set_notif_handler; /**< Event handler to be called when the set_notif Characteristic is written. */
 } ble_doseIO_init_t;
 
 /**@brief doseIO Service structure. This structure contains various status information for the service. */
 struct ble_doseIO_s
 {
-    uint16_t                    service_handle;      /**< Handle of doseIO Service (as provided by the BLE stack). */
-    ble_gatts_char_handles_t    synch_time_char_handles;	/*led_char_handles;*/    /**< Handles related to the LED Characteristic. */
-    ble_gatts_char_handles_t    button_char_handles; /**< Handles related to the Button Characteristic. */
-		ble_gatts_char_handles_t    button_char_handles2; /**< Handles related to the Button Characteristic. */
-    uint8_t                     uuid_type;           /**< UUID type for the doseIO Service. */
-    ble_doseIO_synch_time_handler_t synch_time_handler;   /**< Event handler to be called when the LED Characteristic is written. */
+    uint16_t                    service_handle;      			/**< Handle of doseIO Service (as provided by the BLE stack). */
+    ble_gatts_char_handles_t    synch_time_char_handles;	/**< Handles related to the synch_time Characteristic. */
+		ble_gatts_char_handles_t    set_notif_char_handles;		/**< Handles related to the set_notif Characteristic. */
+    ble_gatts_char_handles_t    button_char_handles; 			/**< Handles related to the Button Characteristic. */
+		ble_gatts_char_handles_t    button_char_handles2; 		/**< Handles related to the Button Characteristic. */
+    uint8_t                     uuid_type;           			/**< UUID type for the doseIO Service. */
+    ble_doseIO_synch_time_handler_t synch_time_handler;   /**< Event handler to be called when the synch_time Characteristic is written. */
+		ble_doseIO_synch_time_handler_t set_notif_handler;   /**< Event handler to be called when the set_notif Characteristic is written. */
 };
 
 

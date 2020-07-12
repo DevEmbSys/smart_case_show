@@ -16,7 +16,7 @@
         <TargetCommonOption>
           <Device>nRF52832_xxAA</Device>
           <Vendor>Nordic Semiconductor</Vendor>
-          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack.8.29.0</PackID>
+          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack.8.32.1</PackID>
           <PackURL>http://developer.nordicsemi.com/nRF5_SDK/pieces/nRF_DeviceFamilyPack/</PackURL>
           <Cpu>IRAM(0x20000000,0x00010000) IRAM2(0x00800000,0x00010000) IROM(0x00000000,0x00080000) CPUTYPE("Cortex-M4") FPU2 DSP CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -274,7 +274,7 @@
               <OCR_RVCT4>
                 <Type>1</Type>
                 <StartAddress>0x26000</StartAddress>
-                <Size>0x52000</Size>
+                <Size>0x46000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>APP_TIMER_V2 APP_TIMER_V2_RTC1_ENABLED CONFIG_GPIO_AS_PINRESET FLOAT_ABI_HARD NRF52 NRF52832_XXAA NRF52_PAN_74 NRF_DFU_SVCI_ENABLED NRF_DFU_TRANSPORT_BLE=1  NRF_SD_BLE_API_VERSION=7 S132 SOFTDEVICE_PRESENT __HEAP_SIZE=8192 __STACK_SIZE=8192</Define>
               <Undefine></Undefine>
-              <IncludePath>.\User;.\components\ble\common;.\components\ble\nrf_ble_gatt;.\components\ble\nrf_ble_qwr;.\components\ble\ble_services\ble_dfu;.\components\libraries\util;.\config;.\components\softdevice\s132\headers;.\components\softdevice\common;.\components\libraries\experimental_section_vars;.\integration\nrfx;.\components\libraries\strerror;.\components\libraries\atomic;.\components\libraries\timer;.\components\libraries\log;.\components\libraries\log\src;.\components\libraries\atomic_flags;.\components\libraries\atomic_fifo;.\components\libraries\sortlist;.\components\softdevice\s132\headers\nrf52;.\components\libraries\memobj;.\components\libraries\balloc;.\external\fprintf;.\components\libraries\ringbuf;.\integration\nrfx\legacy;.\components\boards;.\components\libraries\button;.\components\ble\ble_services\ble_lbs;.\components\libraries\pwr_mgmt;.\components\libraries\mutex;.\components\libraries\delay;.\modules\nrfx;.\modules\nrfx\hal;.\modules\nrfx\drivers\include;.\modules\nrfx\drivers\src;.\components\libraries\bootloader\ble_dfu;.\components\libraries\svc;.\components\libraries\bootloader\dfu;.\components\libraries\bootloader;.\components\ble\peer_manager</IncludePath>
+              <IncludePath>.\User;.\components\ble\common;.\components\ble\nrf_ble_gatt;.\components\ble\nrf_ble_qwr;.\components\ble\ble_services\ble_dfu;.\components\libraries\util;.\config;.\components\softdevice\s132\headers;.\components\softdevice\common;.\components\libraries\experimental_section_vars;.\integration\nrfx;.\components\libraries\strerror;.\components\libraries\atomic;.\components\libraries\timer;.\components\libraries\log;.\components\libraries\log\src;.\components\libraries\atomic_flags;.\components\libraries\atomic_fifo;.\components\libraries\sortlist;.\components\softdevice\s132\headers\nrf52;.\components\libraries\memobj;.\components\libraries\balloc;.\external\fprintf;.\components\libraries\ringbuf;.\integration\nrfx\legacy;.\components\boards;.\components\libraries\button;.\components\libraries\pwr_mgmt;.\components\libraries\mutex;.\components\libraries\delay;.\modules\nrfx;.\modules\nrfx\hal;.\modules\nrfx\drivers\include;.\modules\nrfx\drivers\src;.\components\libraries\bootloader\ble_dfu;.\components\libraries\svc;.\components\libraries\bootloader\dfu;.\components\libraries\bootloader;.\components\ble\peer_manager</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -636,8 +636,8 @@
     <files>
       <file attr="config" category="source" condition="ARM Compiler" name="Device\Source\arm\arm_startup_nrf52.s" version="8.29.0">
         <instance index="0">RTE\Device\nRF52832_xxAA\arm_startup_nrf52.s</instance>
-        <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.29.0" condition="nRF52832 Device and CMSIS"/>
-        <package license="License/license.txt" name="nRF_DeviceFamilyPack" schemaVersion="1.3" url="http://developer.nordicsemi.com/nRF5_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.29.0"/>
+        <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.32.1" condition="nRF52832 Device and CMSIS"/>
+        <package license="License/license.txt" name="nRF_DeviceFamilyPack" schemaVersion="1.3" url="http://developer.nordicsemi.com/nRF5_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.32.1"/>
         <targetInfos>
           <targetInfo name="Target 1"/>
         </targetInfos>
@@ -648,10 +648,10 @@
         <package license="License/license.txt" name="nRF_DeviceFamilyPack" schemaVersion="1.3" url="http://developer.nordicsemi.com/nRF5_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.29.0"/>
         <targetInfos/>
       </file>
-      <file attr="config" category="source" name="Device\Source\system_nrf52.c" version="8.29.0">
+      <file attr="config" category="source" name="Device\Source\system_nrf52.c">
         <instance index="0">RTE\Device\nRF52832_xxAA\system_nrf52.c</instance>
-        <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.29.0" condition="nRF52832 Device and CMSIS"/>
-        <package license="License/license.txt" name="nRF_DeviceFamilyPack" schemaVersion="1.3" url="http://developer.nordicsemi.com/nRF5_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.29.0"/>
+        <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.32.1" condition="nRF52832 Device and CMSIS"/>
+        <package license="License/license.txt" name="nRF_DeviceFamilyPack" schemaVersion="1.3" url="http://developer.nordicsemi.com/nRF5_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.32.1"/>
         <targetInfos>
           <targetInfo name="Target 1"/>
         </targetInfos>

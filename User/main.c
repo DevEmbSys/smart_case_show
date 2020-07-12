@@ -87,7 +87,7 @@
 #define LEDBUTTON_LED                   BSP_BOARD_LED_2                         /**< LED to be toggled with the help of the doseIO Service. */
 #define LEDBUTTON_BUTTON                BSP_BUTTON_0                            /**< Button that will trigger the notification event with the doseIO Service */
 
-#define DEVICE_NAME                     "Empty2"                         /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "doseIO_01"                         /**< Name of device. Will be included in the advertising data. */
 
 #define APP_BLE_OBSERVER_PRIO           3                                       /**< Application's BLE observer priority. You shouldn't need to modify this value. */
 #define APP_BLE_CONN_CFG_TAG            1                                       /**< A tag identifying the SoftDevice BLE configuration. */
@@ -146,23 +146,42 @@ struct tm* tm_data = 0;
 
 #define JournalLengthMax 60*60
 typedef enum{
-	EVENT_NONE = 0, 				// пустое событие
-	EVENT_SET_NOTIFICATION,	// установка оповещения
+	EVENT_SET_NOTIFICATION = 0,	// установка оповещения
 	EVENT_GET_NEW_EVENT,		// получение новых событий
 	EVENT_CASE_OPEN,
 	EVENT_CASE_CLOSE,
 	EVENT_NOTIFICATION_ACTIVE,
 	EVENT_NOTIFICATION_DONE,
+	EVENT_NONE = 255
 }e_TypeEvent;
 
 typedef struct __attribute__ ((aligned(32))){
 	time_t 				Time;
 	uint32_t			Value:16;
 	e_TypeEvent		TypeEvent;
+}s_JournalData;
+
+#define ListNotifMAX 128
+typedef struct __attribute__ ((aligned(32))){
+	s_JournalData Data[ListNotifMAX];
 }s_Journal;
 
-s_Journal Journal[JournalLengthMax];
+typedef struct __attribute__ ((aligned(32))){
+	time_t Time[128];
+}s_ListNotif;
+
+#define JournalADDR					0x6C000
+#define JournalCopyADDR			0x6D000
+#define ListNotifADDR				0x6E000
+#define ListNotifCopyADRR		0x6F000
+
+#define Journal 			((s_Journal*)JournalADDR)
+#define JournalCopy 	((s_Journal*)JournalCopyADDR)
+#define ListNotif 		((s_ListNotif*)ListNotifADDR)
+#define ListNotifCopy ((s_ListNotif*)ListNotifCopyADRR)
+
 uint32_t JournalPointer = 0;
+uint32_t ListNotifPointer = 0;
 
 /**@brief Struct that contains pointers to the encoded advertising data. */
 static ble_gap_adv_data_t m_adv_data =
@@ -179,6 +198,51 @@ static ble_gap_adv_data_t m_adv_data =
 
     }
 };
+
+#define QueueNotifLength 10
+volatile static uint8_t QueueNotifArrBusyFlag = 0;
+volatile static uint32_t QueueNotifArr[QueueNotifLength] = {0};
+volatile static uint32_t QueueNotifArrPointer = 0;
+
+void WriteToFlash(uint32_t ADDR, uint32_t data)
+{
+	// Enable write.
+	NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos);
+	__ISB();
+	__DSB();
+
+	*(uint32_t*)ADDR = data;
+	while (NRF_NVMC->READY == NVMC_READY_READY_Busy) {;}
+
+	NRF_NVMC->CONFIG = (NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos);
+	__ISB();
+	__DSB();
+}
+
+void ErasePageFlash(uint32_t ADDR)
+{
+	// Enable erase.
+	NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Een;
+	__ISB();
+	__DSB();
+
+	// Erase the page
+	NRF_NVMC->ERASEPAGE = ADDR;
+	while (NRF_NVMC->READY == NVMC_READY_READY_Busy) {;}
+
+	NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
+	__ISB();
+	__DSB();
+}
+
+void NotifQueueWrite (uint32_t data)
+{
+	if(QueueNotifArrPointer < QueueNotifLength)
+	{
+		QueueNotifArr[QueueNotifArrPointer] = data;
+		QueueNotifArrPointer++;
+	}
+}
 
 /**@brief Function for assert macro callback.
  *
@@ -319,14 +383,25 @@ static void nrf_qwr_error_handler(uint32_t nrf_error)
 }
 
 
-/**@brief Function for handling write events to the LED characteristic.
+/**@brief Function for handling write events to the synch_time characteristic.
  *
  * @param[in] p_doseIO     Instance of doseIO Service to which the write applies.
- * @param[in] led_state Written/desired state of the LED.
+ * @param[in] led_state Written/desired state of the synch_time.
  */
 static void synch_time_handler(uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data)
 {
-	nrf_cal_set_time_Unix(data);
+	//nrf_cal_set_time_Unix(data);
+	NotifQueueWrite(data);
+}
+
+/**@brief Function for handling write events to the set_notif characteristic.
+ *
+ * @param[in] p_doseIO     Instance of doseIO Service to which the write applies.
+ * @param[in] led_state Written/desired state of the set_notif.
+ */
+static void set_notif_handler(uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data)
+{
+	
 }
 
 
@@ -347,6 +422,7 @@ static void services_init(void)
 
     // Initialize doseIO.
     init.synch_time_handler = synch_time_handler;
+		init.set_notif_handler = set_notif_handler;
 
     err_code = ble_doseIO_init(&m_doseIO, &init);
     APP_ERROR_CHECK(err_code);
@@ -836,6 +912,37 @@ void calendar_updated()
  */
 int main(void)
 {
+		volatile uint8_t JournalEraseAllFlag = 0;
+	volatile uint8_t ListNotifEraseAllFlag = 0;
+	
+		if(JournalEraseAllFlag == 1)
+		{
+			ErasePageFlash(JournalADDR);
+		}
+		
+		if(ListNotifEraseAllFlag == 1)
+		{
+			ErasePageFlash(ListNotifADDR);
+		}
+		
+		for(uint32_t i = 0; i < ListNotifMAX; i++)
+		{
+			if(ListNotif->Time[i] == 0xffffffff)
+			{
+				ListNotifPointer = i;
+				break;
+			}
+		}
+		
+		for(uint32_t i = 0; i < JournalLengthMax; i++)
+		{
+			if(Journal->Data[i].TypeEvent == EVENT_NONE)
+			{
+				JournalPointer = i;
+				break;
+			}
+		}
+	
 		NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
     NRF_CLOCK->TASKS_HFCLKSTART = 1;
     while(NRF_CLOCK->EVENTS_HFCLKSTARTED == 0);
@@ -883,11 +990,20 @@ int main(void)
 		
 		//Journal[0].Time = 1;
 
-    // Enter main loop.
-    for (;;)
-    {
-        idle_state_handle();
-    }
+    
+	for (;;)
+	{
+		if(QueueNotifArrPointer != 0)
+		{
+			if(ListNotif->Time[ListNotifPointer] == 0xffffffff)
+			{
+				WriteToFlash((uint32_t)&ListNotif->Time[ListNotifPointer], QueueNotifArr[0]);
+				ListNotifPointer++;
+			}
+			QueueNotifArrPointer--;
+		}
+		idle_state_handle();
+	}
 }
 
 void nrfx_saadc_irq_handler(void)

@@ -17,6 +17,10 @@ static void on_write(ble_doseIO_t * p_doseIO, ble_evt_t const * p_ble_evt)
     {
         p_doseIO->synch_time_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO, p_evt_write->data[0]);
     }
+		else if (p_evt_write->handle == p_doseIO->set_notif_char_handles.value_handle)
+    {
+        p_doseIO->set_notif_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO, p_evt_write->data[0]);
+    }
 }
 
 
@@ -115,7 +119,7 @@ uint32_t ble_doseIO_init(ble_doseIO_t * p_doseIO, const ble_doseIO_init_t * p_do
         return err_code;
     }
 
-    // Add LED characteristic.
+    // Add synch_time characteristic.
     memset(&add_char_params, 0, sizeof(add_char_params));
     add_char_params.uuid             = doseIO_UUID_SYNCH_TIME_CHAR;
     add_char_params.uuid_type        = p_doseIO->uuid_type;
@@ -127,7 +131,28 @@ uint32_t ble_doseIO_init(ble_doseIO_t * p_doseIO, const ble_doseIO_init_t * p_do
     add_char_params.read_access  = SEC_OPEN;
     add_char_params.write_access = SEC_OPEN;
 
-    return characteristic_add(p_doseIO->service_handle, &add_char_params, &p_doseIO->synch_time_char_handles);
+    err_code = characteristic_add(p_doseIO->service_handle, &add_char_params, &p_doseIO->synch_time_char_handles);
+		
+		if (err_code != NRF_SUCCESS)
+    {
+        return err_code;
+    }
+//		
+//		// Add set_notif characteristic.
+//    memset(&add_char_params, 0, sizeof(add_char_params));
+//    add_char_params.uuid             = doseIO_UUID_SET_NOTIF_CHAR;
+//    add_char_params.uuid_type        = p_doseIO->uuid_type;
+//    add_char_params.init_len         = sizeof(uint32_t);
+//    add_char_params.max_len          = sizeof(uint32_t);
+//    add_char_params.char_props.read  = 1;
+//    add_char_params.char_props.write = 1;
+
+//    add_char_params.read_access  = SEC_OPEN;
+//    add_char_params.write_access = SEC_OPEN;
+
+//    err_code = characteristic_add(p_doseIO->service_handle, &add_char_params, &p_doseIO->set_notif_char_handles);
+		
+		return err_code;
 }
 
 
