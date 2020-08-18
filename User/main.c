@@ -87,7 +87,7 @@
 #define LEDBUTTON_LED                   BSP_BOARD_LED_2                         /**< LED to be toggled with the help of the doseIO Service. */
 #define LEDBUTTON_BUTTON                BSP_BUTTON_0                            /**< Button that will trigger the notification event with the doseIO Service */
 
-#define DEVICE_NAME                     "Empty2"                         /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "doseIO_02"                         /**< Name of device. Will be included in the advertising data. */
 
 #define APP_BLE_OBSERVER_PRIO           3                                       /**< Application's BLE observer priority. You shouldn't need to modify this value. */
 #define APP_BLE_CONN_CFG_TAG            1                                       /**< A tag identifying the SoftDevice BLE configuration. */
@@ -144,25 +144,44 @@ uint16_t OPEN_DATA_HYST = 2;
 
 struct tm* tm_data = 0;
 
-#define JournalLengthMax 60*60
+#define JournalLengthMax 0x1000
+
+#define JournalADDR 			0x6C000
+#define JournalCopyADDR 	0x6D000
+
+#define ListNotifADDR			0x6E000
+#define ListNotifCopyADDR	0x6F000
+
+#define ListNotifMAX 0x1000
 typedef enum{
-	EVENT_NONE = 0, 				// пустое событие
-	EVENT_SET_NOTIFICATION,	// установка оповещения
+	EVENT_SET_NOTIFICATION = 0,	// установка оповещения
 	EVENT_GET_NEW_EVENT,		// получение новых событий
 	EVENT_CASE_OPEN,
 	EVENT_CASE_CLOSE,
 	EVENT_NOTIFICATION_ACTIVE,
 	EVENT_NOTIFICATION_DONE,
+	EVENT_NONE = 255
 }e_TypeEvent;
 
 typedef struct __attribute__ ((aligned(32))){
 	time_t 				Time;
 	uint32_t			Value:16;
 	e_TypeEvent		TypeEvent;
+}s_JournalData;
+
+typedef struct __attribute__ ((aligned(32))){
+	s_JournalData Data[128];
 }s_Journal;
 
-s_Journal Journal[JournalLengthMax];
+typedef struct __attribute__ ((aligned(32))){
+	time_t Time[128];
+}s_ListNotif;
+
+#define Journal ((s_Journal*)JournalADDR)
 uint32_t JournalPointer = 0;
+
+#define ListNotif ((s_ListNotif*)ListNotifADDR)
+uint32_t ListNotifPointer = 0;
 
 /**@brief Struct that contains pointers to the encoded advertising data. */
 static ble_gap_adv_data_t m_adv_data =
@@ -319,14 +338,63 @@ static void nrf_qwr_error_handler(uint32_t nrf_error)
 }
 
 
-/**@brief Function for handling write events to the LED characteristic.
+/**@brief Function for handling write events to the synch_time characteristic.
  *
- * @param[in] p_doseIO     Instance of doseIO Service to which the write applies.
- * @param[in] led_state Written/desired state of the LED.
+ * @param[in] p_doseIO			Instance of doseIO Service to which the write applies.
+ * @param[in] data					Writed in format Unix (start 1 January 1970 00:00:00 GMT) of the synch_time.
  */
 static void synch_time_handler(uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data)
 {
-	nrf_cal_set_time_Unix(data);
+	//nrf_cal_set_time_Unix(data);
+	if(ListNotifPointer < 128)
+	{
+		// Enable write.
+    NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen;
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+    {
+    }
+
+    /* Only full 32-bit words can be written to Flash. */
+		*(uint32_t*)(ListNotif->Time[ListNotifPointer]) = data;
+		while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+		{
+		}
+
+    NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+    {
+    }
+		ListNotifPointer++;
+	}
+}
+
+/**@brief Function for handling write events to the synch_time characteristic.
+ *
+ * @param[in] p_doseIO			Instance of doseIO Service to which the write applies.
+ * @param[in] data					Writed in format Unix (start 1 January 1970 00:00:00 GMT) of the synch_time.
+ */
+static void set_notif_handler(uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data)
+{
+	if(ListNotifPointer < 128)
+	{
+		// Enable write.
+    NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen;
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+    {
+    }
+
+    /* Only full 32-bit words can be written to Flash. */
+		*(uint32_t*)(ListNotif->Time[ListNotifPointer]) = data;
+		while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+		{
+		}
+
+    NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+    {
+    }
+		ListNotifPointer++;
+	}
 }
 
 
@@ -347,6 +415,7 @@ static void services_init(void)
 
     // Initialize doseIO.
     init.synch_time_handler = synch_time_handler;
+		init.set_notif_handler = set_notif_handler;
 
     err_code = ble_doseIO_init(&m_doseIO, &init);
     APP_ERROR_CHECK(err_code);
@@ -614,6 +683,11 @@ static void power_management_init(void)
 
 static void idle_state_handle(void)
 {
+	uint16_t CaseOpen = nrf_gpio_pin_read(27);
+	/*
+	3/2.045
+	*/
+		uint16_t BatVoltag = 0;
 		nrf_gpio_pin_set(3);
 		//nrf_drv_saadc_sample();
 		
@@ -644,28 +718,25 @@ static void idle_state_handle(void)
 			ADC_DATA_Arr_count = 0;
 		}
 		
-		if(ADC_DATA_AVERAGE < OPEN_DATA_SET_THRESHOLD - OPEN_DATA_HYST)
+		if(CaseOpen)
 		{
 			nrf_gpio_pin_set(7);
-		}
-		else if(ADC_DATA_AVERAGE > OPEN_DATA_SET_THRESHOLD)
-		{
+			NRFX_DELAY_US(100000);
 			nrf_gpio_pin_clear(7);
+			NRFX_DELAY_US(1000000);
 		}
 
 		if(ConectedFlag == 1)
 		{
 			ble_gatts_hvx_params_t params;
-			uint16_t BatVoltag = 0;
 			uint16_t len = 0;
-			
 			tm_data = nrf_cal_get_time();
 			
 			len = sizeof(ADC_DATA_RAW[0][0]);
 			memset(&params, 0, sizeof(params));
 			params.type   = BLE_GATT_HVX_NOTIFICATION;
 			params.handle = m_doseIO.button_char_handles.value_handle;
-			params.p_data = (uint8_t*)&tm_data->tm_sec;
+			params.p_data = (uint8_t*)&ADC_DATA_RAW[0][1];
 			params.p_len  = &len;
 
 			sd_ble_gatts_hvx(m_conn_handle, &params);
@@ -686,7 +757,7 @@ static void idle_state_handle(void)
 			memset(&params, 0, sizeof(params));
 			params.type   = BLE_GATT_HVX_NOTIFICATION;
 			params.handle = m_doseIO.button_char_handles2.value_handle;
-			params.p_data = (uint8_t*)&BatVoltag;
+			params.p_data = (uint8_t*)&CaseOpen;
 			params.p_len  = &len;
 			
 			sd_ble_gatts_hvx(m_conn_handle, &params);
@@ -836,6 +907,63 @@ void calendar_updated()
  */
 int main(void)
 {
+		volatile uint8_t EraseJournalFlag = 0;
+		volatile uint8_t EraseListNotifFlag = 0;
+		if(EraseListNotifFlag == 1)
+		{
+			// Enable erase.
+			NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Een;
+			__ISB();
+			__DSB();
+
+			// Erase the page
+			NRF_NVMC->ERASEPAGE = ListNotifADDR;
+			while (NRF_NVMC->READY == NVMC_READY_READY_Busy) {;}
+
+			NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
+			__ISB();
+			__DSB();
+		}
+		if(EraseJournalFlag == 1)
+		{
+			// Enable erase.
+			NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Een;
+			__ISB();
+			__DSB();
+
+			// Erase the page
+			NRF_NVMC->ERASEPAGE = JournalADDR;
+			while (NRF_NVMC->READY == NVMC_READY_READY_Busy) {;}
+
+			NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
+			__ISB();
+			__DSB();
+		}
+		
+		if(JournalPointer == 0)
+		{
+			for(uint32_t i = 0; i < (0x1000/32); i++)
+			{
+				if(Journal->Data[i].TypeEvent == EVENT_NONE)
+				{
+					JournalPointer = i;
+					break;
+				}
+			}
+		}
+		
+		if(ListNotifPointer == 0)
+		{
+			for(uint32_t i = 0; i < (0x1000/32); i++)
+			{
+				if(ListNotif->Time[i] == 0xffffffff)
+				{
+					ListNotifPointer = i;
+					break;
+				}
+			}
+		}
+		
 		NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
     NRF_CLOCK->TASKS_HFCLKSTART = 1;
     while(NRF_CLOCK->EVENTS_HFCLKSTARTED == 0);
@@ -865,13 +993,23 @@ int main(void)
 		nrf_gpio_cfg_output(7);
 		nrf_gpio_cfg_output(8);
 		
-		NRF_GPIO->PIN_CNF[30] = (GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos)		
+		NRF_GPIO->PIN_CNF[29] = (GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos)		
                                   | (GPIO_PIN_CNF_DRIVE_S0D1 << GPIO_PIN_CNF_DRIVE_Pos)
 				  				  | (GPIO_PIN_CNF_PULL_Disabled << GPIO_PIN_CNF_PULL_Pos)
 								  | (GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos)
 								  | (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos);
 									
-		nrf_gpio_pin_clear(30);
+		NRF_GPIO->PIN_CNF[27] = (GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos)		
+                                  | (GPIO_PIN_CNF_DRIVE_S0D1 << GPIO_PIN_CNF_DRIVE_Pos)
+				  				  | (GPIO_PIN_CNF_PULL_Pullup << GPIO_PIN_CNF_PULL_Pos)
+								  | (GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos)
+								  | (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos);
+									
+		nrf_gpio_pin_set(27);
+									
+		nrf_gpio_pin_clear(29);
+		
+		nrf_gpio_cfg_input(27,NRF_GPIO_PIN_PULLUP);
 		
 		timer_init();
 		pwm_init(12);
@@ -880,8 +1018,6 @@ int main(void)
 		//NRF_TIMER3->CC[0] = 512;
 		
 		nrf_cal_set_time(2020,07,06,18,00,00);
-		
-		//Journal[0].Time = 1;
 
     // Enter main loop.
     for (;;)
