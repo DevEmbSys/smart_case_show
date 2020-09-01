@@ -22,6 +22,28 @@ NRF_SDH_BLE_OBSERVER(_name ## _obs,                                             
                      BLE_doseIO_BLE_OBSERVER_PRIO,                                                     \
                      ble_doseIO_on_ble_evt, &_name)
 	
+/*
+UUID services:
+	1)Settings device
+		1c410584-ec7c-11ea-adc1-0242ac120002
+
+	2)Journal Event
+		8179fa96-ec7c-11ea-adc1-0242ac120002
+
+	3)Calendare notification
+		93ec9724-ec7c-11ea-adc1-0242ac120002
+
+*/
+
+#define doseIO_UUID_SETTINGS			{0x02, 0x00, 0x12, 0xac, 0x42, 0x02, 0xc1, 0xad, \
+																	 0xea, 0x11, 0x7c, 0xec, 0x84, 0x05, 0x41, 0x1c}
+
+#define doseIO_UUID_JOURNAL				{0x02, 0x00, 0x12, 0xac, 0x42, 0x02, 0xc1, 0xad, \
+																	 0xea, 0x11, 0x7c, 0xec, 0x96, 0xfa, 0x79, 0x81}
+
+#define doseIO_UUID_CALENDARE			{0x02, 0x00, 0x12, 0xac, 0x42, 0x02, 0xc1, 0xad, \
+																	 0xea, 0x11, 0x7c, 0xec, 0x24, 0x97, 0xec, 0x93}
+	
 //15f2e42e-c26d-11ea-b3de-0242ac130004
 #define doseIO_UUID_BASE					{0x04, 0x00, 0x13, 0xac, 0x42, 0x02, 0xde, 0xb3, \
 																	 0xea, 0x11, 0x6d, 0xc2, 0x2e, 0xe4, 0xf2, 0x15}
@@ -70,7 +92,9 @@ struct ble_doseIO_s
  *
  * @retval NRF_SUCCESS If the service was initialized successfully. Otherwise, an error code is returned.
  */
-uint32_t ble_doseIO_init(ble_doseIO_t * p_doseIO, const ble_doseIO_init_t * p_doseIO_init);
+uint32_t ble_doseIO_init_s_settings(ble_doseIO_t * p_doseIO, const ble_doseIO_init_t * p_doseIO_init);
+
+uint32_t ble_doseIO_init_s_journal(ble_doseIO_t * p_doseIO, const ble_doseIO_init_t * p_doseIO_init);
 
 
 /**@brief Function for handling the application's BLE stack events.

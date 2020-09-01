@@ -417,7 +417,10 @@ static void services_init(void)
     init.synch_time_handler = synch_time_handler;
 		init.set_notif_handler = set_notif_handler;
 
-    err_code = ble_doseIO_init(&m_doseIO, &init);
+    err_code = ble_doseIO_init_s_settings(&m_doseIO, &init);
+    APP_ERROR_CHECK(err_code);
+		
+		err_code = ble_doseIO_init_s_journal(&m_doseIO, &init);
     APP_ERROR_CHECK(err_code);
 		
 		err_code = ble_dfu_buttonless_init(&dfus_init);
