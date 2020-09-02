@@ -22,6 +22,23 @@ NRF_SDH_BLE_OBSERVER(_name ## _obs,                                             
                      BLE_doseIO_BLE_OBSERVER_PRIO,                                                     \
                      ble_doseIO_on_ble_evt, &_name)
 	
+#define BLE_doseIO_Journal_DEF(_name)                                                                          \
+static ble_doseIO_Journal_t _name;                                                                             \
+NRF_SDH_BLE_OBSERVER(_name ## _obs,                                                                 	 \
+                     BLE_doseIO_BLE_OBSERVER_PRIO,                                                     \
+                     ble_doseIO_Journal_on_ble_evt, &_name)
+
+typedef struct{
+	uint8_t Data;
+}s_Journal_data;	
+
+#define OPCODE_LENGTH        1
+#define HANDLE_LENGTH        2
+
+#define	JOURNAL_QUEQUE_MAX 20
+
+#define BLE_NUS_MAX_DATA_LEN (NRF_SDH_BLE_GATT_MAX_MTU_SIZE - OPCODE_LENGTH - HANDLE_LENGTH)
+	
 /*
 UUID services:
 	1)Settings device
@@ -41,25 +58,37 @@ UUID services:
 #define doseIO_UUID_JOURNAL				{0x02, 0x00, 0x12, 0xac, 0x42, 0x02, 0xc1, 0xad, \
 																	 0xea, 0x11, 0x7c, 0xec, 0x96, 0xfa, 0x79, 0x81}
 
+#define doseIO_UUID_J_SERVICE						0xa000
+#define doseIO_UUID_J_DATA     					0xa001
+#define doseIO_UUID_J_LENGHT_QUEQUE			0xa002
+
 #define doseIO_UUID_CALENDARE			{0x02, 0x00, 0x12, 0xac, 0x42, 0x02, 0xc1, 0xad, \
 																	 0xea, 0x11, 0x7c, 0xec, 0x24, 0x97, 0xec, 0x93}
-	
+
+#define doseIO_UUID_C_SERVICE						0xb000
+#define doseIO_UUID_C_SYNCHR						0xb001
+#define doseIO_UUID_C_WRITE_NOTIF				0xb002
+#define doseIO_UUID_C_CLEAR_NOTIF				0xb003
+#define doseIO_UUID_C_LIST_NOTIF				0xb004
+																	 
 //15f2e42e-c26d-11ea-b3de-0242ac130004
 #define doseIO_UUID_BASE					{0x04, 0x00, 0x13, 0xac, 0x42, 0x02, 0xde, 0xb3, \
 																	 0xea, 0x11, 0x6d, 0xc2, 0x2e, 0xe4, 0xf2, 0x15}
 																	 
-#define doseIO_UUID_SERVICE     				0xab00
-#define doseIO_UUID_SYNCH_TIME_CHAR    	0xab01
-#define doseIO_UUID_SET_NOTIF_CHAR    	0xab02
-#define doseIO_UUID_BUTTON_CHAR 				0xab09
-#define doseIO_UUID_BUTTON_CHAR2 				0xab0a
+#define doseIO_UUID_SERVICE     				0xc000
+#define doseIO_UUID_SYNCH_TIME_CHAR    	0xc001
+#define doseIO_UUID_SET_NOTIF_CHAR    	0xc002
+#define doseIO_UUID_BUTTON_CHAR 				0xc003
+#define doseIO_UUID_BUTTON_CHAR2 				0xc004
 
 
 // Forward declaration of the ble_doseIO_t type.
 typedef struct ble_doseIO_s ble_doseIO_t;
+typedef struct ble_doseIO_Journal_s ble_doseIO_Journal_t;
 
 typedef void (*ble_doseIO_synch_time_handler_t) (uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data);
 typedef void (*ble_doseIO_set_notif_handler_t) (uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data);
+typedef void (*ble_doseIO_Journal_data_handler_t) (ble_doseIO_Journal_t * p_doseIO_Journal);
 
 /** @brief doseIO Service init structure. This structure contains all options and data needed for
  *        initialization of the service.*/
@@ -67,6 +96,7 @@ typedef struct
 {
     ble_doseIO_synch_time_handler_t		synch_time_handler; /**< Event handler to be called when the synch_time Characteristic is written. */
 		ble_doseIO_set_notif_handler_t		set_notif_handler; /**< Event handler to be called when the set_notif Characteristic is written. */
+		ble_doseIO_Journal_data_handler_t doseIO_Journal_data_handler;
 } ble_doseIO_init_t;
 
 /**@brief doseIO Service structure. This structure contains various status information for the service. */
@@ -82,6 +112,14 @@ struct ble_doseIO_s
 		ble_doseIO_set_notif_handler_t 	set_notif_handler;   			/**< Event handler to be called when the set_notif Characteristic is written. */
 };
 
+struct ble_doseIO_Journal_s
+{
+	uint16_t                    				service_handle;
+	uint8_t                     				uuid_type;
+	ble_doseIO_Journal_data_handler_t  	doseIO_Journal_data_handler;
+	ble_gatts_char_handles_t 						list_handles;
+};
+
 
 /**@brief Function for initializing the doseIO Service.
  *
@@ -94,7 +132,9 @@ struct ble_doseIO_s
  */
 uint32_t ble_doseIO_init_s_settings(ble_doseIO_t * p_doseIO, const ble_doseIO_init_t * p_doseIO_init);
 
-uint32_t ble_doseIO_init_s_journal(ble_doseIO_t * p_doseIO, const ble_doseIO_init_t * p_doseIO_init);
+uint32_t ble_doseIO_init_s_journal(ble_doseIO_Journal_t * p_doseIO_Journal, const ble_doseIO_init_t * p_doseIO_init);
+
+uint32_t ble_doseIO_init_s_calendare(ble_doseIO_t * p_doseIO, const ble_doseIO_init_t * p_doseIO_init);
 
 
 /**@brief Function for handling the application's BLE stack events.
@@ -105,6 +145,7 @@ uint32_t ble_doseIO_init_s_journal(ble_doseIO_t * p_doseIO, const ble_doseIO_ini
  * @param[in] p_context  doseIO Service structure.
  */
 void ble_doseIO_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context);
+void ble_doseIO_Journal_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context);
 
 
 /**@brief Function for sending a button state notification.
