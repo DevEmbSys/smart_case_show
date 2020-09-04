@@ -34,7 +34,22 @@ static void on_write_Calendare(ble_doseIO_Calendare_t * p_doseIO_Calendare, ble_
 {
     ble_gatts_evt_write_t const * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 	
-		p_doseIO_Calendare->doseIO_Calendare_data_handler(p_doseIO_Calendare);
+		if (p_evt_write->handle == p_doseIO_Calendare->time_synch_handles.value_handle)
+    {
+        p_doseIO_Calendare->time_synch_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO_Calendare, p_evt_write->data[0]);
+    }
+		else if (p_evt_write->handle == p_doseIO_Calendare->write_notif_handles.value_handle)
+    {
+        p_doseIO_Calendare->write_notif_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO_Calendare, p_evt_write->data[0]);
+    }
+		else if (p_evt_write->handle == p_doseIO_Calendare->clear_notif_handles.value_handle)
+    {
+        p_doseIO_Calendare->clear_notif_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO_Calendare, p_evt_write->data[0]);
+    }
+		else if (p_evt_write->handle == p_doseIO_Calendare->list_notif_handles.value_handle)
+    {
+        p_doseIO_Calendare->list_notif_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO_Calendare, p_evt_write->data[0]);
+    }
 }
 
 
@@ -245,110 +260,113 @@ uint32_t ble_doseIO_init_s_journal(ble_doseIO_Journal_t * p_doseIO_Journal, cons
 }
 
 //calendare service init
-uint32_t ble_doseIO_init_s_calendare(ble_doseIO_t * p_doseIO, const ble_doseIO_init_t * p_doseIO_init)
+uint32_t ble_doseIO_init_s_calendare(ble_doseIO_Calendare_t * p_doseIO_Calendare, const ble_doseIO_init_t * p_doseIO_init)
 {
-    volatile uint32_t              err_code;
-    ble_uuid_t            ble_uuid;
-    ble_add_char_params_t add_char_params;
+	volatile uint32_t              err_code;
+	ble_uuid_t            ble_uuid;
+	ble_add_char_params_t add_char_params;
 
-    // Initialize service structure.
-    p_doseIO->synch_time_handler = p_doseIO_init->synch_time_handler;
+	// Initialize service structure.
+	p_doseIO_Calendare->time_synch_handler = p_doseIO_init->Calendare_time_synch_handler;
+	p_doseIO_Calendare->write_notif_handler = p_doseIO_init->Calendare_write_notif_handler;
+	p_doseIO_Calendare->clear_notif_handler = p_doseIO_init->Calendare_clear_notif_handler;
+	p_doseIO_Calendare->list_notif_handler = p_doseIO_init->Calendare_list_notif_handler;
 
-    // Add service.
-    ble_uuid128_t base_uuid = {doseIO_UUID_CALENDARE};
-    err_code = sd_ble_uuid_vs_add(&base_uuid, &p_doseIO->uuid_type);
-    VERIFY_SUCCESS(err_code);
+	// Add service.
+	ble_uuid128_t base_uuid = {doseIO_UUID_CALENDARE};
+	err_code = sd_ble_uuid_vs_add(&base_uuid, &p_doseIO_Calendare->uuid_type);
+	VERIFY_SUCCESS(err_code);
 
-    ble_uuid.type = p_doseIO->uuid_type;
-    ble_uuid.uuid = doseIO_UUID_C_SERVICE;
+	ble_uuid.type = p_doseIO_Calendare->uuid_type;
+	ble_uuid.uuid = doseIO_UUID_C_SERVICE;
 
-    err_code = sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY, &ble_uuid, &p_doseIO->service_handle);
-    VERIFY_SUCCESS(err_code);
+	err_code = sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY, &ble_uuid, &p_doseIO_Calendare->service_handle);
+	VERIFY_SUCCESS(err_code);
 
-    // Add Button characteristic.
-    memset(&add_char_params, 0, sizeof(add_char_params));
-    add_char_params.uuid             = doseIO_UUID_C_SYNCHR;
-    add_char_params.uuid_type        = p_doseIO->uuid_type;
-    add_char_params.init_len         = sizeof(uint32_t);
-    add_char_params.max_len          = sizeof(uint32_t);
-    add_char_params.char_props.read  = 1;
-    add_char_params.char_props.write = 1;
+	// Add Button characteristic.
+	memset(&add_char_params, 0, sizeof(add_char_params));
+	add_char_params.uuid             = doseIO_UUID_C_SYNCHR;
+	add_char_params.uuid_type        = p_doseIO_Calendare->uuid_type;
+	add_char_params.init_len         = sizeof(uint32_t);
+	add_char_params.max_len          = sizeof(uint32_t);
+	add_char_params.char_props.read  = 1;
+	add_char_params.char_props.write = 1;
 
-    add_char_params.read_access  = SEC_OPEN;
-    add_char_params.write_access = SEC_OPEN;
+	add_char_params.read_access  = SEC_OPEN;
+	add_char_params.write_access = SEC_OPEN;
 
-    err_code = characteristic_add(p_doseIO->service_handle,
-                                  &add_char_params,
-                                  &p_doseIO->button_char_handles);
-    if (err_code != NRF_SUCCESS)
-    {
-        return err_code;
-    }
-		
-		// Add Button characteristic.
-    memset(&add_char_params, 0, sizeof(add_char_params));
-    add_char_params.uuid             = doseIO_UUID_C_WRITE_NOTIF;
-    add_char_params.uuid_type        = p_doseIO->uuid_type;
-    add_char_params.init_len         = sizeof(uint32_t);
-    add_char_params.max_len          = sizeof(uint32_t);
-    add_char_params.char_props.read  = 0;
-    add_char_params.char_props.write = 1;
+	err_code = characteristic_add(p_doseIO_Calendare->service_handle,
+																&add_char_params,
+																&p_doseIO_Calendare->time_synch_handles);
+	if (err_code != NRF_SUCCESS)
+	{
+			return err_code;
+	}
+	
+	// Add Button characteristic.
+	memset(&add_char_params, 0, sizeof(add_char_params));
+	add_char_params.uuid             = doseIO_UUID_C_WRITE_NOTIF;
+	add_char_params.uuid_type        = p_doseIO_Calendare->uuid_type;
+	add_char_params.init_len         = sizeof(uint32_t);
+	add_char_params.max_len          = sizeof(uint32_t);
+	add_char_params.char_props.read  = 0;
+	add_char_params.char_props.write = 1;
 
-    add_char_params.read_access  = SEC_OPEN;
-    add_char_params.write_access = SEC_OPEN;
+	add_char_params.read_access  = SEC_OPEN;
+	add_char_params.write_access = SEC_OPEN;
 
-    err_code = characteristic_add(p_doseIO->service_handle,
-                                  &add_char_params,
-                                  &p_doseIO->button_char_handles);
-		
-		if (err_code != NRF_SUCCESS)
-    {
-        return err_code;
-    }
-		
-		// Add Button characteristic.
-    memset(&add_char_params, 0, sizeof(add_char_params));
-    add_char_params.uuid             = doseIO_UUID_C_CLEAR_NOTIF;
-    add_char_params.uuid_type        = p_doseIO->uuid_type;
-    add_char_params.init_len         = sizeof(uint32_t);
-    add_char_params.max_len          = sizeof(uint32_t);
-    add_char_params.char_props.read  = 0;
-    add_char_params.char_props.write = 1;
+	err_code = characteristic_add(p_doseIO_Calendare->service_handle,
+																&add_char_params,
+																&p_doseIO_Calendare->write_notif_handles);
+	
+	if (err_code != NRF_SUCCESS)
+	{
+			return err_code;
+	}
+	
+	// Add Button characteristic.
+	memset(&add_char_params, 0, sizeof(add_char_params));
+	add_char_params.uuid             = doseIO_UUID_C_CLEAR_NOTIF;
+	add_char_params.uuid_type        = p_doseIO_Calendare->uuid_type;
+	add_char_params.init_len         = sizeof(uint32_t);
+	add_char_params.max_len          = sizeof(uint32_t);
+	add_char_params.char_props.read  = 0;
+	add_char_params.char_props.write = 1;
 
-    add_char_params.read_access  = SEC_OPEN;
-    add_char_params.write_access = SEC_OPEN;
+	add_char_params.read_access  = SEC_OPEN;
+	add_char_params.write_access = SEC_OPEN;
 
-    err_code = characteristic_add(p_doseIO->service_handle,
-                                  &add_char_params,
-                                  &p_doseIO->button_char_handles);
-		
-		if (err_code != NRF_SUCCESS)
-    {
-        return err_code;
-    }
-		
-		// Add Button characteristic.
-    memset(&add_char_params, 0, sizeof(add_char_params));
-    add_char_params.uuid             = doseIO_UUID_C_LIST_NOTIF;
-    add_char_params.uuid_type        = p_doseIO->uuid_type;
-    add_char_params.max_len           = BLE_NUS_MAX_DATA_LEN;
-    add_char_params.init_len          = sizeof(uint8_t);
-    add_char_params.is_var_len        = true;
-    add_char_params.char_props.notify = 1;
+	err_code = characteristic_add(p_doseIO_Calendare->service_handle,
+																&add_char_params,
+																&p_doseIO_Calendare->clear_notif_handles);
+	
+	if (err_code != NRF_SUCCESS)
+	{
+			return err_code;
+	}
+	
+	// Add Button characteristic.
+	memset(&add_char_params, 0, sizeof(add_char_params));
+	add_char_params.uuid             = doseIO_UUID_C_LIST_NOTIF;
+	add_char_params.uuid_type        = p_doseIO_Calendare->uuid_type;
+	add_char_params.max_len           = BLE_NUS_MAX_DATA_LEN;
+	add_char_params.init_len          = BLE_NUS_MAX_DATA_LEN;
+	add_char_params.is_var_len        = true;
+	add_char_params.char_props.notify = 1;
 
-    add_char_params.read_access  = SEC_OPEN;
-    add_char_params.write_access = SEC_OPEN;
+	add_char_params.read_access  = SEC_OPEN;
+	add_char_params.write_access = SEC_OPEN;
 
-    err_code = characteristic_add(p_doseIO->service_handle,
-                                  &add_char_params,
-                                  &p_doseIO->button_char_handles);
-		
-		if (err_code != NRF_SUCCESS)
-    {
-        return err_code;
-    }
-		
-		return err_code;
+	err_code = characteristic_add(p_doseIO_Calendare->service_handle,
+																&add_char_params,
+																&p_doseIO_Calendare->list_notif_handles);
+	
+	if (err_code != NRF_SUCCESS)
+	{
+			return err_code;
+	}
+	
+	return err_code;
 }
 
 uint32_t ble_doseIO_on_button_change(uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint8_t button_state)

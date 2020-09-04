@@ -28,6 +28,12 @@ NRF_SDH_BLE_OBSERVER(_name ## _obs,                                             
                      BLE_doseIO_BLE_OBSERVER_PRIO,                                                     \
                      ble_doseIO_Journal_on_ble_evt, &_name)
 
+#define BLE_doseIO_Calendare_DEF(_name)                                                                          \
+static ble_doseIO_Calendare_t _name;                                                                             \
+NRF_SDH_BLE_OBSERVER(_name ## _obs,                                                                 	 \
+                     BLE_doseIO_BLE_OBSERVER_PRIO,                                                     \
+                     ble_doseIO_Calendare_on_ble_evt, &_name)
+										 
 typedef struct{
 	uint8_t Data;
 }s_Journal_data;	
@@ -90,16 +96,22 @@ typedef struct ble_doseIO_Calendare_s ble_doseIO_Calendare_t;
 typedef void (*ble_doseIO_synch_time_handler_t) (uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data);
 typedef void (*ble_doseIO_set_notif_handler_t) (uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data);
 typedef void (*ble_doseIO_Journal_data_handler_t) (ble_doseIO_Journal_t * p_doseIO_Journal);
-typedef void (*ble_doseIO_Calendare_data_handler_t) (ble_doseIO_Calendare_t * p_doseIO_Calendare);
+typedef void (*ble_doseIO_C_time_synch_handler_t) (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data);
+typedef void (*ble_doseIO_C_write_notif_handler_t) (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data);
+typedef void (*ble_doseIO_C_clear_notif_handler_t) (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data);
+typedef void (*ble_doseIO_C_list_notif_handler_t) (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data);
 
 /** @brief doseIO Service init structure. This structure contains all options and data needed for
  *        initialization of the service.*/
 typedef struct
 {
-    ble_doseIO_synch_time_handler_t		synch_time_handler; /**< Event handler to be called when the synch_time Characteristic is written. */
-		ble_doseIO_set_notif_handler_t		set_notif_handler; /**< Event handler to be called when the set_notif Characteristic is written. */
-		ble_doseIO_Journal_data_handler_t doseIO_Journal_data_handler;
-		ble_doseIO_Calendare_data_handler_t doseIO_Calendare_data_handler;
+    ble_doseIO_synch_time_handler_t			synch_time_handler; /**< Event handler to be called when the synch_time Characteristic is written. */
+		ble_doseIO_set_notif_handler_t			set_notif_handler; /**< Event handler to be called when the set_notif Characteristic is written. */
+		ble_doseIO_Journal_data_handler_t 	doseIO_Journal_data_handler;
+		ble_doseIO_C_time_synch_handler_t 	Calendare_time_synch_handler;
+		ble_doseIO_C_write_notif_handler_t	Calendare_write_notif_handler;
+		ble_doseIO_C_clear_notif_handler_t	Calendare_clear_notif_handler;
+		ble_doseIO_C_list_notif_handler_t		Calendare_list_notif_handler;
 } ble_doseIO_init_t;
 
 /**@brief doseIO Service structure. This structure contains various status information for the service. */
@@ -125,9 +137,16 @@ struct ble_doseIO_Journal_s
 
 struct ble_doseIO_Calendare_s
 {
-	uint16_t                    				service_handle;
-	uint8_t                     				uuid_type;
-	ble_doseIO_Calendare_data_handler_t  	doseIO_Calendare_data_handler;
+	uint16_t                    					service_handle;
+	uint8_t                     					uuid_type;
+	ble_doseIO_C_time_synch_handler_t    	time_synch_handler; 
+	ble_doseIO_C_write_notif_handler_t    write_notif_handler; 
+	ble_doseIO_C_clear_notif_handler_t    clear_notif_handler;
+	ble_doseIO_C_list_notif_handler_t    	list_notif_handler;
+	ble_gatts_char_handles_t    					time_synch_handles;
+	ble_gatts_char_handles_t    					write_notif_handles;
+	ble_gatts_char_handles_t    					clear_notif_handles;
+	ble_gatts_char_handles_t    					list_notif_handles;
 };
 
 
@@ -144,7 +163,7 @@ uint32_t ble_doseIO_init_s_settings(ble_doseIO_t * p_doseIO, const ble_doseIO_in
 
 uint32_t ble_doseIO_init_s_journal(ble_doseIO_Journal_t * p_doseIO_Journal, const ble_doseIO_init_t * p_doseIO_init);
 
-uint32_t ble_doseIO_init_s_calendare(ble_doseIO_t * p_doseIO, const ble_doseIO_init_t * p_doseIO_init);
+uint32_t ble_doseIO_init_s_calendare(ble_doseIO_Calendare_t * p_doseIO, const ble_doseIO_init_t * p_doseIO_init);
 
 
 /**@brief Function for handling the application's BLE stack events.
