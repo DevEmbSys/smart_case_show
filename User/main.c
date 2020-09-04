@@ -399,6 +399,17 @@ static void set_notif_handler(uint16_t conn_handle, ble_doseIO_t * p_doseIO, uin
 }
 
 
+static void doseIO_Journal_data_handler (ble_doseIO_Journal_t * p_doseIO_Journal)
+{
+	
+}
+
+static void doseIO_Calendare_data_handler (ble_doseIO_Calendare_t * p_doseIO_Calendare)
+{
+	
+}
+
+
 /**@brief Function for initializing services that will be used by the application.
  */
 static void services_init(void)
@@ -417,6 +428,8 @@ static void services_init(void)
     // Initialize doseIO.
     init.synch_time_handler = synch_time_handler;
 		init.set_notif_handler = set_notif_handler;
+		init.doseIO_Journal_data_handler = doseIO_Journal_data_handler;
+		init.doseIO_Calendare_data_handler = doseIO_Calendare_data_handler;
 
     err_code = ble_doseIO_init_s_settings(&m_doseIO, &init);
     APP_ERROR_CHECK(err_code);
@@ -424,8 +437,8 @@ static void services_init(void)
 		err_code = ble_doseIO_init_s_journal(&m_doseIO_Journal, &init);
     APP_ERROR_CHECK(err_code);
 		
-		err_code = ble_doseIO_init_s_calendare(&m_doseIO, &init);
-    APP_ERROR_CHECK(err_code);
+//		err_code = ble_doseIO_init_s_calendare(&m_doseIO, &init);
+//    APP_ERROR_CHECK(err_code);
 		
 		err_code = ble_dfu_buttonless_init(&dfus_init);
     APP_ERROR_CHECK(err_code);

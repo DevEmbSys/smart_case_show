@@ -26,15 +26,15 @@ static void on_write(ble_doseIO_t * p_doseIO, ble_evt_t const * p_ble_evt)
 static void on_write_Journal(ble_doseIO_Journal_t * p_doseIO_Journal, ble_evt_t const * p_ble_evt)
 {
     ble_gatts_evt_write_t const * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
+	
+		p_doseIO_Journal->doseIO_Journal_data_handler(p_doseIO_Journal);
+}
 
-//    if (p_evt_write->handle == p_doseIO_Journal->synch_time_char_handles.value_handle)
-//    {
-//        p_doseIO->synch_time_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO, p_evt_write->data[0]);
-//    }
-//		else if (p_evt_write->handle == p_doseIO->set_notif_char_handles.value_handle)
-//    {
-//        p_doseIO->set_notif_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO, p_evt_write->data[0]);
-//    }
+static void on_write_Calendare(ble_doseIO_Calendare_t * p_doseIO_Calendare, ble_evt_t const * p_ble_evt)
+{
+    ble_gatts_evt_write_t const * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
+	
+		p_doseIO_Calendare->doseIO_Calendare_data_handler(p_doseIO_Calendare);
 }
 
 
@@ -62,6 +62,22 @@ void ble_doseIO_Journal_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context
     {
         case BLE_GATTS_EVT_WRITE:
             on_write_Journal(p_doseIO, p_ble_evt);
+            break;
+
+        default:
+            // No implementation needed.
+            break;
+    }
+}
+
+void ble_doseIO_Calendare_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context)
+{
+    ble_doseIO_Calendare_t * p_doseIO = (ble_doseIO_Calendare_t *)p_context;
+
+    switch (p_ble_evt->header.evt_id)
+    {
+        case BLE_GATTS_EVT_WRITE:
+            on_write_Calendare(p_doseIO, p_ble_evt);
             break;
 
         default:

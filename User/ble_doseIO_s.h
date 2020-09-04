@@ -85,10 +85,12 @@ UUID services:
 // Forward declaration of the ble_doseIO_t type.
 typedef struct ble_doseIO_s ble_doseIO_t;
 typedef struct ble_doseIO_Journal_s ble_doseIO_Journal_t;
+typedef struct ble_doseIO_Calendare_s ble_doseIO_Calendare_t;
 
 typedef void (*ble_doseIO_synch_time_handler_t) (uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data);
 typedef void (*ble_doseIO_set_notif_handler_t) (uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data);
 typedef void (*ble_doseIO_Journal_data_handler_t) (ble_doseIO_Journal_t * p_doseIO_Journal);
+typedef void (*ble_doseIO_Calendare_data_handler_t) (ble_doseIO_Calendare_t * p_doseIO_Calendare);
 
 /** @brief doseIO Service init structure. This structure contains all options and data needed for
  *        initialization of the service.*/
@@ -97,6 +99,7 @@ typedef struct
     ble_doseIO_synch_time_handler_t		synch_time_handler; /**< Event handler to be called when the synch_time Characteristic is written. */
 		ble_doseIO_set_notif_handler_t		set_notif_handler; /**< Event handler to be called when the set_notif Characteristic is written. */
 		ble_doseIO_Journal_data_handler_t doseIO_Journal_data_handler;
+		ble_doseIO_Calendare_data_handler_t doseIO_Calendare_data_handler;
 } ble_doseIO_init_t;
 
 /**@brief doseIO Service structure. This structure contains various status information for the service. */
@@ -118,6 +121,13 @@ struct ble_doseIO_Journal_s
 	uint8_t                     				uuid_type;
 	ble_doseIO_Journal_data_handler_t  	doseIO_Journal_data_handler;
 	ble_gatts_char_handles_t 						list_handles;
+};
+
+struct ble_doseIO_Calendare_s
+{
+	uint16_t                    				service_handle;
+	uint8_t                     				uuid_type;
+	ble_doseIO_Calendare_data_handler_t  	doseIO_Calendare_data_handler;
 };
 
 
@@ -146,6 +156,7 @@ uint32_t ble_doseIO_init_s_calendare(ble_doseIO_t * p_doseIO, const ble_doseIO_i
  */
 void ble_doseIO_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context);
 void ble_doseIO_Journal_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context);
+void ble_doseIO_Calendare_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context);
 
 
 /**@brief Function for sending a button state notification.
