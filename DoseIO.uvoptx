@@ -118,7 +118,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
-          <Name>/</Name>
+          <Name>,ф;</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -162,38 +162,6 @@
           <Filename>.\components\libraries\util\app_error.c</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\Test\components/libraries/util/app_error.c\73</Expression>
-        </Bp>
-        <Bp>
-          <Number>1</Number>
-          <Type>0</Type>
-          <LineNumber>34</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>167300</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\User\ble_doseIO_s.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\Test\User/ble_doseIO_s.c\34</Expression>
-        </Bp>
-        <Bp>
-          <Number>2</Number>
-          <Type>0</Type>
-          <LineNumber>343</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>160778</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\User\ble_doseIO_s.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\Test\User/ble_doseIO_s.c\343</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>

@@ -87,7 +87,6 @@ UUID services:
 #define doseIO_UUID_BUTTON_CHAR 				0xc003
 #define doseIO_UUID_BUTTON_CHAR2 				0xc004
 
-
 // Forward declaration of the ble_doseIO_t type.
 typedef struct ble_doseIO_s ble_doseIO_t;
 typedef struct ble_doseIO_Journal_s ble_doseIO_Journal_t;

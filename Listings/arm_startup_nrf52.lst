@@ -430,7 +430,7 @@ Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M4.fp --apcs=int
 erwork --depend=.\objects\arm_startup_nrf52.d -o.\objects\arm_startup_nrf52.o -
 I.\modules\nrfx\drivers\include -I.\RTE\_Target_1 -IC:\Keil_v5\ARM\PACK\ARM\CMS
 IS\5.6.0\CMSIS\Core\Include -IC:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Devic
-eFamilyPack\8.29.0\Device\Include --predefine="__MICROLIB SETA 1" --predefine="
+eFamilyPack\8.32.1\Device\Include --predefine="__MICROLIB SETA 1" --predefine="
 __UVISION_VERSION SETA 524" --predefine="_RTE_ SETA 1" --predefine="NRF52832_XX
 AA SETA 1" --list=.\listings\arm_startup_nrf52.lst RTE\Device\nRF52832_xxAA\arm
 _startup_nrf52.s

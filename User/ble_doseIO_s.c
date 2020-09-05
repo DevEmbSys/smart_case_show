@@ -46,10 +46,6 @@ static void on_write_Calendare(ble_doseIO_Calendare_t * p_doseIO_Calendare, ble_
     {
         p_doseIO_Calendare->clear_notif_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO_Calendare, p_evt_write->data[0]);
     }
-		else if (p_evt_write->handle == p_doseIO_Calendare->list_notif_handles.value_handle)
-    {
-        p_doseIO_Calendare->list_notif_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO_Calendare, p_evt_write->data[0]);
-    }
 }
 
 
@@ -69,15 +65,38 @@ void ble_doseIO_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context)
     }
 }
 
+/**@brief Function for handling the @ref BLE_GATTS_EVT_HVN_TX_COMPLETE event from the SoftDevice.
+ *
+ * @param[in] p_nus     Nordic UART Service structure.
+ * @param[in] p_ble_evt Pointer to the event received from BLE stack.
+ */
+static void on_hvx_tx_complete(ble_doseIO_Calendare_t * doseIO_Calendare, ble_evt_t const * p_ble_evt)
+{
+    ble_gatts_evt_write_t const * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
+
+    if (p_evt_write->handle == doseIO_Calendare->list_notif_handles.value_handle)
+    {
+        doseIO_Calendare->list_notif_handler(p_ble_evt->evt.gap_evt.conn_handle, doseIO_Calendare, p_evt_write->data[0]);
+    }
+}
+
 void ble_doseIO_Journal_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context)
 {
-    ble_doseIO_Journal_t * p_doseIO = (ble_doseIO_Journal_t *)p_context;
+    ble_doseIO_Journal_t * p_doseIO_Journal = (ble_doseIO_Journal_t *)p_context;
 
     switch (p_ble_evt->header.evt_id)
     {
-        case BLE_GATTS_EVT_WRITE:
-            on_write_Journal(p_doseIO, p_ble_evt);
+				case BLE_GAP_EVT_CONNECTED:
+            //on_connect(p_nus, p_ble_evt);
             break;
+
+        case BLE_GATTS_EVT_WRITE:
+            on_write_Journal(p_doseIO_Journal, p_ble_evt);
+            break;
+
+//        case BLE_GATTS_EVT_HVN_TX_COMPLETE:
+//            on_hvx_tx_complete(p_nus, p_ble_evt);
+//            break;
 
         default:
             // No implementation needed.
@@ -87,12 +106,16 @@ void ble_doseIO_Journal_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context
 
 void ble_doseIO_Calendare_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context)
 {
-    ble_doseIO_Calendare_t * p_doseIO = (ble_doseIO_Calendare_t *)p_context;
+    ble_doseIO_Calendare_t * p_doseIO_Calendare = (ble_doseIO_Calendare_t *)p_context;
 
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GATTS_EVT_WRITE:
-            on_write_Calendare(p_doseIO, p_ble_evt);
+            on_write_Calendare(p_doseIO_Calendare, p_ble_evt);
+            break;
+							
+				case BLE_GATTS_EVT_HVN_TX_COMPLETE:
+            on_hvx_tx_complete(p_doseIO_Calendare, p_ble_evt);
             break;
 
         default:
@@ -350,12 +373,13 @@ uint32_t ble_doseIO_init_s_calendare(ble_doseIO_Calendare_t * p_doseIO_Calendare
 	add_char_params.uuid             = doseIO_UUID_C_LIST_NOTIF;
 	add_char_params.uuid_type        = p_doseIO_Calendare->uuid_type;
 	add_char_params.max_len           = BLE_NUS_MAX_DATA_LEN;
-	add_char_params.init_len          = BLE_NUS_MAX_DATA_LEN;
+	add_char_params.init_len          = sizeof(uint8_t);
 	add_char_params.is_var_len        = true;
 	add_char_params.char_props.notify = 1;
 
 	add_char_params.read_access  = SEC_OPEN;
 	add_char_params.write_access = SEC_OPEN;
+	add_char_params.cccd_write_access = SEC_OPEN;
 
 	err_code = characteristic_add(p_doseIO_Calendare->service_handle,
 																&add_char_params,

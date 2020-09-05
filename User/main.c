@@ -422,7 +422,7 @@ static void doseIO_C_clear_notif_handler (uint16_t conn_handle, ble_doseIO_Calen
 
 static void doseIO_C_list_notif_handler (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data)
 {
-	
+	return;
 }
 
 
