@@ -187,6 +187,8 @@ void ble_doseIO_Calendare_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_conte
  */
 uint32_t ble_doseIO_on_button_change(uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint8_t button_state);
 
+uint32_t ble_list_notif_data_send(ble_doseIO_Calendare_t * p_doseIO_Calendare, uint8_t   * p_data, uint16_t  * p_length, uint16_t    conn_handle);
+
 
 #ifdef __cplusplus
 }

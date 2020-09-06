@@ -154,7 +154,7 @@ struct tm* tm_data = 0;
 #define ListNotifADDR			0x6E000
 #define ListNotifCopyADDR	0x6F000
 
-#define ListNotifMAX 0x1000
+#define ListNotifMAX 128
 typedef enum{
 	EVENT_SET_NOTIFICATION = 0,	// установка оповещения
 	EVENT_GET_NEW_EVENT,		// получение новых событий
@@ -172,11 +172,11 @@ typedef struct __attribute__ ((aligned(32))){
 }s_JournalData;
 
 typedef struct __attribute__ ((aligned(32))){
-	s_JournalData Data[128];
+	s_JournalData Data[ListNotifMAX];
 }s_Journal;
 
 typedef struct __attribute__ ((aligned(32))){
-	time_t Time[128];
+	time_t Time[ListNotifMAX];
 }s_ListNotif;
 
 #define Journal ((s_Journal*)JournalADDR)
@@ -216,6 +216,9 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 {
     app_error_handler(DEAD_BEEF, line_num, p_file_name);
 }
+
+static void flash_array_write(uint32_t address, uint8_t * src, uint32_t length);
+static void flash_write_words(uint32_t address, uint32_t src);
 
 
 /**@brief Function for the LEDs initialization.
@@ -407,22 +410,51 @@ static void doseIO_Journal_data_handler (ble_doseIO_Journal_t * p_doseIO_Journal
 
 static void doseIO_C_time_synch_handler (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data)
 {
-	
+	nrf_cal_set_time_Unix(data);
 }
 
 static void doseIO_C_write_notif_handler (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data)
 {
-	
+	if(ListNotifPointer < ListNotifMAX)
+	{
+		volatile static uint32_t data_copy = 0;
+		data_copy = data;
+		//flash_write_words((uint32_t)&ListNotif->Time[ListNotifPointer],data);
+		volatile uint32_t err_code;
+		err_code = sd_flash_write(&ListNotif->Time[ListNotifPointer],(uint32_t const *)&data_copy,1);
+		
+		ListNotifPointer++;
+	}
 }
 
 static void doseIO_C_clear_notif_handler (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data)
 {
-	
+	if(data >= ListNotifMAX)
+	{
+		sd_flash_page_erase((uint32_t)(&ListNotif->Time[0])/0x1000);
+		ListNotifPointer = 0;
+	}
+	else
+	{
+		volatile static uint32_t data_copy = 0;
+		volatile uint32_t err_code;
+		if(ListNotif->Time[data] != 0xffffffff)err_code = sd_flash_write(&ListNotif->Time[data],(uint32_t const *)&data_copy,1);
+		if(ListNotifPointer == data) ListNotifPointer++;
+	}
 }
 
-static void doseIO_C_list_notif_handler (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data)
+static void doseIO_C_list_notif_handler (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint16_t data)
 {
-	return;
+	volatile uint16_t dataLength = data;
+	
+	if(dataLength >= ListNotifMAX)
+	{
+		dataLength = ListNotifMAX;
+	}
+	
+	dataLength *= sizeof(uint32_t);
+	
+	ble_list_notif_data_send(&m_doseIO_Calendare,(uint8_t*)&ListNotif->Time[0],(uint16_t*)&dataLength,m_conn_handle);
 }
 
 
@@ -802,6 +834,17 @@ static void idle_state_handle(void)
 			sd_ble_gatts_hvx(m_conn_handle, &params);
 		}
 		
+		ble_gatts_value_t gatts_value;
+
+    // Initialize value struct.
+    memset(&gatts_value, 0, sizeof(gatts_value));
+
+    gatts_value.len     = sizeof(uint32_t);
+    gatts_value.offset  = 0;
+    gatts_value.p_value = (uint8_t*)nrf_cal_get_time();
+
+    sd_ble_gatts_value_set(m_conn_handle, m_doseIO_Calendare.time_synch_handles.value_handle, &gatts_value);
+		
     nrf_pwr_mgmt_run();
 }
 
@@ -942,6 +985,53 @@ void calendar_updated()
 	
 }
 
+static void flash_array_write(uint32_t address, uint8_t * src, uint32_t length)
+{
+    uint32_t i;
+
+    // Enable write.
+    NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen;
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+    {
+    }
+
+    for (i = 0; i < length; i++)
+    {
+        /* Only full 32-bit words can be written to Flash. */
+        ((uint32_t*)address)[i] = 0x000000FFUL & (uint32_t)((uint8_t)src[i]);
+        while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+        {
+        }
+    }
+
+    NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+    {
+    }
+}
+
+static void flash_write_words(uint32_t address, uint32_t src)
+{
+    uint32_t i;
+
+    // Enable write.
+    NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen;
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+    {
+    }
+
+    /* Only full 32-bit words can be written to Flash. */
+		*((uint32_t*)address) = (uint32_t)src;
+		while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+		{
+		}
+
+    NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy)
+    {
+    }
+}
+
 /**@brief Function for application main entry.
  */
 int main(void)
@@ -993,7 +1083,7 @@ int main(void)
 		
 		if(ListNotifPointer == 0)
 		{
-			for(uint32_t i = 0; i < (0x1000/32); i++)
+			for(uint32_t i = 0; i < ListNotifMAX; i++)
 			{
 				if(ListNotif->Time[i] == 0xffffffff)
 				{
