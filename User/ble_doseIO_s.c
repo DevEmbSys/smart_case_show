@@ -25,79 +25,93 @@ static void on_write(ble_doseIO_t * p_doseIO, ble_evt_t const * p_ble_evt)
 
 static void on_write_Journal(ble_doseIO_Journal_t * p_doseIO_Journal, ble_evt_t const * p_ble_evt)
 {
-    ble_gatts_evt_write_t const * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
+		static ble_gatts_evt_write_t p_evt_write;
+		memcpy((uint8_t*)&p_evt_write,&p_ble_evt->evt.gatts_evt.params.write,sizeof(ble_gatts_evt_write_t));
 	
-		p_doseIO_Journal->doseIO_Journal_data_handler(p_doseIO_Journal);
+		if (p_evt_write.handle == p_doseIO_Journal->read_handles.value_handle)
+    {
+				static uint32_t dataTimeSynch;
+			
+				dataTimeSynch = 0;
+			
+				for(uint8_t i = 0; i < p_evt_write.len; i++)
+				{
+					((uint8_t*)&dataTimeSynch)[p_evt_write.len - 1 - i] = p_evt_write.data[i];
+				}
+				
+        p_doseIO_Journal->read_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO_Journal, dataTimeSynch);
+    }
+		else if (p_evt_write.handle == p_doseIO_Journal->clear_handles.value_handle)
+    {
+				static uint32_t dataTimeSynch;
+			
+				dataTimeSynch = 0;
+			
+				for(uint8_t i = 0; i < p_evt_write.len; i++)
+				{
+					((uint8_t*)&dataTimeSynch)[p_evt_write.len - 1 - i] = p_evt_write.data[i];
+				}
+				
+        p_doseIO_Journal->clear_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO_Journal, dataTimeSynch);
+    }
 }
 
 static void on_write_Calendare(ble_doseIO_Calendare_t * p_doseIO_Calendare, ble_evt_t const * p_ble_evt)
 {
-    ble_gatts_evt_write_t const * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
+    static ble_gatts_evt_write_t p_evt_write;
+		memcpy((uint8_t*)&p_evt_write,&p_ble_evt->evt.gatts_evt.params.write,sizeof(ble_gatts_evt_write_t));
 	
-		if (p_evt_write->handle == p_doseIO_Calendare->time_synch_handles.value_handle)
+		if (p_evt_write.handle == p_doseIO_Calendare->time_synch_handles.value_handle)
     {
-				volatile uint32_t maskData = 256;
-				volatile uint8_t lengthData = p_evt_write->len;
+				static uint32_t dataTimeSynch;
 			
-				if(lengthData > 4) lengthData = 4;
+				dataTimeSynch = 0;
 			
-				for(uint8_t i = 1; i < lengthData; i++)
+				for(uint8_t i = 0; i < p_evt_write.len; i++)
 				{
-					maskData *=256;
+					((uint8_t*)&dataTimeSynch)[p_evt_write.len - 1 - i] = p_evt_write.data[i];
 				}
-				maskData -= 1;
 				
-				if(lengthData == 0) maskData = 0;
-				
-        p_doseIO_Calendare->time_synch_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO_Calendare, *((uint32_t*)&p_evt_write->data[0])&maskData);
+        p_doseIO_Calendare->time_synch_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO_Calendare, dataTimeSynch);
     }
-		else if (p_evt_write->handle == p_doseIO_Calendare->write_notif_handles.value_handle)
+		else if (p_evt_write.handle == p_doseIO_Calendare->write_notif_handles.value_handle)
     {
-				volatile uint32_t maskData = 256;
-				volatile uint8_t lengthData = p_evt_write->len;
+				static uint32_t dataWriteNotif;
 			
-				if(lengthData > 4) lengthData = 4;
+				dataWriteNotif = 0;
 			
-				for(uint8_t i = 1; i < lengthData; i++)
+				for(uint8_t i = 0; i < p_evt_write.len; i++)
 				{
-					maskData *=256;
+					((uint8_t*)&dataWriteNotif)[p_evt_write.len - 1 - i] = p_evt_write.data[i];
 				}
-				maskData -= 1;
 				
-				if(lengthData == 0) maskData = 0;
-        p_doseIO_Calendare->write_notif_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO_Calendare, *((uint32_t*)&p_evt_write->data[0])&maskData);
+        p_doseIO_Calendare->write_notif_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO_Calendare, dataWriteNotif);
     }
-		else if (p_evt_write->handle == p_doseIO_Calendare->clear_notif_handles.value_handle)
+		else if (p_evt_write.handle == p_doseIO_Calendare->clear_notif_handles.value_handle)
     {
-				volatile uint32_t maskData = 256;
-				volatile uint8_t lengthData = p_evt_write->len;
+				static uint32_t dataClearNotif;
 			
-				if(lengthData > 4) lengthData = 4;
+				dataClearNotif = 0;
 			
-				for(uint8_t i = 1; i < lengthData; i++)
+				for(uint8_t i = 0; i < p_evt_write.len; i++)
 				{
-					maskData *=256;
+					((uint8_t*)&dataClearNotif)[p_evt_write.len - 1 - i] = p_evt_write.data[i];
 				}
-				maskData -= 1;
 				
-				if(lengthData == 0) maskData = 0;
-        p_doseIO_Calendare->clear_notif_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO_Calendare, *((uint32_t*)&p_evt_write->data[0])&maskData);
+        p_doseIO_Calendare->clear_notif_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO_Calendare, dataClearNotif);
     }
-		else if (p_evt_write->handle == p_doseIO_Calendare->list_notif_handles.value_handle)
+		else if (p_evt_write.handle == p_doseIO_Calendare->list_notif_handles.value_handle)
     {
-				volatile uint32_t maskData = 256;
-				volatile uint8_t lengthData = p_evt_write->len;
+				static uint32_t dataListNotif;
 			
-				if(lengthData > 4) lengthData = 4;
+				dataListNotif = 0;
 			
-				for(uint8_t i = 1; i < lengthData; i++)
+				for(uint8_t i = 0; i < p_evt_write.len; i++)
 				{
-					maskData *=256;
+					((uint8_t*)&dataListNotif)[p_evt_write.len - 1 - i] = p_evt_write.data[i];
 				}
-				maskData -= 1;
 				
-				if(lengthData == 0) maskData = 0;
-        p_doseIO_Calendare->list_notif_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO_Calendare, *((uint32_t*)&p_evt_write->data[0])&maskData);
+        p_doseIO_Calendare->list_notif_handler(p_ble_evt->evt.gap_evt.conn_handle, p_doseIO_Calendare, dataListNotif);
     }
 }
 
@@ -300,7 +314,8 @@ uint32_t ble_doseIO_init_s_journal(ble_doseIO_Journal_t * p_doseIO_Journal, cons
     ble_add_char_params_t add_char_params;
 
     // Initialize service structure.
-    p_doseIO_Journal->doseIO_Journal_data_handler = p_doseIO_init->doseIO_Journal_data_handler;
+    p_doseIO_Journal->clear_handler = p_doseIO_init->Journal_clear_handler;
+		p_doseIO_Journal->read_handler = p_doseIO_init->Journal_read_handler;
 
     // Add service.
     ble_uuid128_t base_uuid = {doseIO_UUID_JOURNAL};
@@ -315,24 +330,47 @@ uint32_t ble_doseIO_init_s_journal(ble_doseIO_Journal_t * p_doseIO_Journal, cons
 
     // Add Button characteristic.
     memset(&add_char_params, 0, sizeof(add_char_params));
-    add_char_params.uuid              = doseIO_UUID_J_DATA;
+    add_char_params.uuid              = doseIO_UUID_J_READ;
     add_char_params.uuid_type         = p_doseIO_Journal->uuid_type;
     add_char_params.max_len           = BLE_NUS_MAX_DATA_LEN;
     add_char_params.init_len          = sizeof(uint8_t);
     add_char_params.is_var_len        = true;
+		add_char_params.char_props.read 	= 1;
+		add_char_params.char_props.write 	= 1;
     add_char_params.char_props.notify = 1;
 
     add_char_params.read_access       = SEC_OPEN;
+		add_char_params.write_access      = SEC_OPEN;
     add_char_params.cccd_write_access = SEC_OPEN;
 
     err_code = characteristic_add(p_doseIO_Journal->service_handle,
                                   &add_char_params,
-                                  &p_doseIO_Journal->list_handles);
+                                  &p_doseIO_Journal->read_handles);
     if (err_code != NRF_SUCCESS)
     {
         return err_code;
     }
 		
+		// Add Button characteristic.
+    memset(&add_char_params, 0, sizeof(add_char_params));
+    add_char_params.uuid              = doseIO_UUID_J_CLEAR;
+    add_char_params.uuid_type         = p_doseIO_Journal->uuid_type;
+    add_char_params.max_len           = BLE_NUS_MAX_DATA_LEN;
+    add_char_params.init_len          = sizeof(uint8_t);
+    add_char_params.is_var_len        = true;
+		add_char_params.char_props.write 	= 1;
+    add_char_params.char_props.notify = 1;
+
+    add_char_params.write_access      = SEC_OPEN;
+    add_char_params.cccd_write_access = SEC_OPEN;
+
+    err_code = characteristic_add(p_doseIO_Journal->service_handle,
+                                  &add_char_params,
+                                  &p_doseIO_Journal->clear_handles);
+    if (err_code != NRF_SUCCESS)
+    {
+        return err_code;
+    }
 }
 
 //calendare service init
@@ -468,10 +506,7 @@ uint32_t ble_list_notif_data_send(ble_doseIO_Calendare_t * p_doseIO_Calendare,
 {
 		volatile uint16_t dataLengthCopy = *p_length;
     ret_code_t                 err_code;
-    ble_gatts_hvx_params_t     hvx_params;if (*p_length > BLE_NUS_MAX_DATA_LEN)
-    {
-        return NRF_ERROR_INVALID_PARAM;
-    }
+    ble_gatts_hvx_params_t     hvx_params;
 
     memset(&hvx_params, 0, sizeof(hvx_params));
 
@@ -484,14 +519,16 @@ uint32_t ble_list_notif_data_send(ble_doseIO_Calendare_t * p_doseIO_Calendare,
 			
 			err_code = sd_ble_gatts_hvx(conn_handle, &hvx_params);
 		}
-		else
+		else if(dataLengthCopy > BLE_NUS_MAX_DATA_LEN)
 		{
-			for(uint16_t i = dataLengthCopy; i > 0 ;i -= BLE_NUS_MAX_DATA_LEN)
+			for(int16_t i = dataLengthCopy, j = 0; i > 0 ; i -= BLE_NUS_MAX_DATA_LEN, j += BLE_NUS_MAX_DATA_LEN)
 			{
 				uint16_t p_length_current = BLE_NUS_MAX_DATA_LEN;
 				hvx_params.handle = p_doseIO_Calendare->list_notif_handles.value_handle;
-				hvx_params.p_data = p_data;
-				if(i > BLE_NUS_MAX_DATA_LEN) hvx_params.p_len  = &p_length_current;
+				hvx_params.p_data = p_data+j;
+				if(i > BLE_NUS_MAX_DATA_LEN) p_length_current = BLE_NUS_MAX_DATA_LEN;
+				else p_length_current = i;
+				hvx_params.p_len  = &p_length_current;
 				hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;
 				
 				err_code = sd_ble_gatts_hvx(conn_handle, &hvx_params);

@@ -90,6 +90,11 @@ void nrf_cal_set_time_Unix(time_t data)
     m_time = m_last_calibrate_time = newtime;
 }
 
+time_t nrf_cal_get_time_Unix(void)
+{
+    return m_time;
+}
+
 struct tm *nrf_cal_get_time(void)
 {
     time_t return_time;

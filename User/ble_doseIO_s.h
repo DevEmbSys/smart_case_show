@@ -65,8 +65,8 @@ UUID services:
 																	 0xea, 0x11, 0x7c, 0xec, 0x96, 0xfa, 0x79, 0x81}
 
 #define doseIO_UUID_J_SERVICE						0xa000
-#define doseIO_UUID_J_DATA     					0xa001
-#define doseIO_UUID_J_LENGHT_QUEQUE			0xa002
+#define doseIO_UUID_J_READ     					0xa001
+#define doseIO_UUID_J_CLEAR							0xa002
 
 #define doseIO_UUID_CALENDARE			{0x02, 0x00, 0x12, 0xac, 0x42, 0x02, 0xc1, 0xad, \
 																	 0xea, 0x11, 0x7c, 0xec, 0x24, 0x97, 0xec, 0x93}
@@ -94,7 +94,10 @@ typedef struct ble_doseIO_Calendare_s ble_doseIO_Calendare_t;
 
 typedef void (*ble_doseIO_synch_time_handler_t) (uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data);
 typedef void (*ble_doseIO_set_notif_handler_t) (uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data);
-typedef void (*ble_doseIO_Journal_data_handler_t) (ble_doseIO_Journal_t * p_doseIO_Journal);
+																	 
+typedef void (*ble_doseIO_J_read_handler_t) (uint16_t conn_handle, ble_doseIO_Journal_t * p_doseIO_Journal, uint32_t data);
+typedef void (*ble_doseIO_J_clear_handler_t) (uint16_t conn_handle, ble_doseIO_Journal_t * p_doseIO_Journal, uint32_t data);
+																	 
 typedef void (*ble_doseIO_C_time_synch_handler_t) (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data);
 typedef void (*ble_doseIO_C_write_notif_handler_t) (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data);
 typedef void (*ble_doseIO_C_clear_notif_handler_t) (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data);
@@ -106,7 +109,10 @@ typedef struct
 {
     ble_doseIO_synch_time_handler_t			synch_time_handler; /**< Event handler to be called when the synch_time Characteristic is written. */
 		ble_doseIO_set_notif_handler_t			set_notif_handler; /**< Event handler to be called when the set_notif Characteristic is written. */
-		ble_doseIO_Journal_data_handler_t 	doseIO_Journal_data_handler;
+		
+		ble_doseIO_J_read_handler_t 				Journal_read_handler;
+		ble_doseIO_J_clear_handler_t 				Journal_clear_handler;
+	
 		ble_doseIO_C_time_synch_handler_t 	Calendare_time_synch_handler;
 		ble_doseIO_C_write_notif_handler_t	Calendare_write_notif_handler;
 		ble_doseIO_C_clear_notif_handler_t	Calendare_clear_notif_handler;
@@ -130,8 +136,10 @@ struct ble_doseIO_Journal_s
 {
 	uint16_t                    				service_handle;
 	uint8_t                     				uuid_type;
-	ble_doseIO_Journal_data_handler_t  	doseIO_Journal_data_handler;
-	ble_gatts_char_handles_t 						list_handles;
+	ble_doseIO_J_read_handler_t  				read_handler;
+	ble_doseIO_J_clear_handler_t  			clear_handler;
+	ble_gatts_char_handles_t 						read_handles;
+	ble_gatts_char_handles_t 						clear_handles;
 };
 
 struct ble_doseIO_Calendare_s

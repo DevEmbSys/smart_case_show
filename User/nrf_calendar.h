@@ -39,6 +39,8 @@ void nrf_cal_set_time(uint32_t year, uint32_t month, uint32_t day, uint32_t hour
 //Writed in format Unix (start 1 January 1970 00:00:00 GMT)
 void nrf_cal_set_time_Unix(time_t data);
 
+time_t nrf_cal_get_time_Unix(void);
+
 // Returns the uncalibrated time as a tm struct. For more information about the tm struct and the time.h library in general please refer to:
 // http://www.tutorialspoint.com/c_standard_library/time_h.htm
 struct tm *nrf_cal_get_time(void);
