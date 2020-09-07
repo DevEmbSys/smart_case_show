@@ -61,54 +61,65 @@ UUID services:
 #define doseIO_UUID_SETTINGS			{0x02, 0x00, 0x12, 0xac, 0x42, 0x02, 0xc1, 0xad, \
 																	 0xea, 0x11, 0x7c, 0xec, 0x84, 0x05, 0x41, 0x1c}
 
+#define doseIO_UUID_S_SERVICE						0xa000
+#define doseIO_UUID_S_WRITE_PASSWORD		0xa001
+#define doseIO_UUID_S_SET_NAME					0xa002
+#define doseIO_UUID_S_DEVICE_RESET			0xa003
+#define doseIO_UUID_S_LED_SETTINGS			0xa004
+																	 
+
 #define doseIO_UUID_JOURNAL				{0x02, 0x00, 0x12, 0xac, 0x42, 0x02, 0xc1, 0xad, \
 																	 0xea, 0x11, 0x7c, 0xec, 0x96, 0xfa, 0x79, 0x81}
 
-#define doseIO_UUID_J_SERVICE						0xa000
-#define doseIO_UUID_J_READ     					0xa001
-#define doseIO_UUID_J_CLEAR							0xa002
+#define doseIO_UUID_J_SERVICE						0xb000
+#define doseIO_UUID_J_READ     					0xb001
+#define doseIO_UUID_J_CLEAR							0xb002
 
 #define doseIO_UUID_CALENDARE			{0x02, 0x00, 0x12, 0xac, 0x42, 0x02, 0xc1, 0xad, \
 																	 0xea, 0x11, 0x7c, 0xec, 0x24, 0x97, 0xec, 0x93}
 
-#define doseIO_UUID_C_SERVICE						0xb000
-#define doseIO_UUID_C_SYNCHR						0xb001
-#define doseIO_UUID_C_WRITE_NOTIF				0xb002
-#define doseIO_UUID_C_CLEAR_NOTIF				0xb003
-#define doseIO_UUID_C_LIST_NOTIF				0xb004
+#define doseIO_UUID_C_SERVICE						0xc000
+#define doseIO_UUID_C_SYNCHR						0xc001
+#define doseIO_UUID_C_WRITE_NOTIF				0xc002
+#define doseIO_UUID_C_CLEAR_NOTIF				0xc003
+#define doseIO_UUID_C_LIST_NOTIF				0xc004
 																	 
 //15f2e42e-c26d-11ea-b3de-0242ac130004
-#define doseIO_UUID_BASE					{0x04, 0x00, 0x13, 0xac, 0x42, 0x02, 0xde, 0xb3, \
-																	 0xea, 0x11, 0x6d, 0xc2, 0x2e, 0xe4, 0xf2, 0x15}
-																	 
-#define doseIO_UUID_SERVICE     				0xc000
-#define doseIO_UUID_SYNCH_TIME_CHAR    	0xc001
-#define doseIO_UUID_SET_NOTIF_CHAR    	0xc002
-#define doseIO_UUID_BUTTON_CHAR 				0xc003
-#define doseIO_UUID_BUTTON_CHAR2 				0xc004
+//#define doseIO_UUID_BASE					{0x04, 0x00, 0x13, 0xac, 0x42, 0x02, 0xde, 0xb3, \
+//																	 0xea, 0x11, 0x6d, 0xc2, 0x2e, 0xe4, 0xf2, 0x15}
+//																	 
+//#define doseIO_UUID_SERVICE     				0xc000
+//#define doseIO_UUID_SYNCH_TIME_CHAR    	0xc001
+//#define doseIO_UUID_SET_NOTIF_CHAR    	0xc002
+//#define doseIO_UUID_BUTTON_CHAR 				0xc003
+//#define doseIO_UUID_BUTTON_CHAR2 				0xc004
 
 // Forward declaration of the ble_doseIO_t type.
 typedef struct ble_doseIO_s ble_doseIO_t;
 typedef struct ble_doseIO_Journal_s ble_doseIO_Journal_t;
 typedef struct ble_doseIO_Calendare_s ble_doseIO_Calendare_t;
 
-typedef void (*ble_doseIO_synch_time_handler_t) (uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data);
-typedef void (*ble_doseIO_set_notif_handler_t) (uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data);
+typedef void (*ble_doseIO_S_write_password_handler_t) (uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data);
+typedef void (*ble_doseIO_S_set_name_handler_t) 			(uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data);
+typedef void (*ble_doseIO_S_device_reset_handler_t) 	(uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data);
+typedef void (*ble_doseIO_S_led_settings_handler_t) 	(uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data);
 																	 
-typedef void (*ble_doseIO_J_read_handler_t) (uint16_t conn_handle, ble_doseIO_Journal_t * p_doseIO_Journal, uint32_t data);
-typedef void (*ble_doseIO_J_clear_handler_t) (uint16_t conn_handle, ble_doseIO_Journal_t * p_doseIO_Journal, uint32_t data);
+typedef void (*ble_doseIO_J_read_handler_t) 					(uint16_t conn_handle, ble_doseIO_Journal_t * p_doseIO_Journal, uint32_t data);
+typedef void (*ble_doseIO_J_clear_handler_t) 					(uint16_t conn_handle, ble_doseIO_Journal_t * p_doseIO_Journal, uint32_t data);
 																	 
-typedef void (*ble_doseIO_C_time_synch_handler_t) (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data);
-typedef void (*ble_doseIO_C_write_notif_handler_t) (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data);
-typedef void (*ble_doseIO_C_clear_notif_handler_t) (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data);
-typedef void (*ble_doseIO_C_list_notif_handler_t) (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data);
+typedef void (*ble_doseIO_C_time_synch_handler_t) 		(uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data);
+typedef void (*ble_doseIO_C_write_notif_handler_t) 		(uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data);
+typedef void (*ble_doseIO_C_clear_notif_handler_t) 		(uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data);
+typedef void (*ble_doseIO_C_list_notif_handler_t) 		(uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data);
 
 /** @brief doseIO Service init structure. This structure contains all options and data needed for
  *        initialization of the service.*/
 typedef struct
 {
-    ble_doseIO_synch_time_handler_t			synch_time_handler; /**< Event handler to be called when the synch_time Characteristic is written. */
-		ble_doseIO_set_notif_handler_t			set_notif_handler; /**< Event handler to be called when the set_notif Characteristic is written. */
+    ble_doseIO_S_write_password_handler_t			write_password_handler; 
+		ble_doseIO_S_set_name_handler_t						set_name_handler; 
+		ble_doseIO_S_device_reset_handler_t				device_reset_handler;
+		ble_doseIO_S_led_settings_handler_t				led_settings_handler;
 		
 		ble_doseIO_J_read_handler_t 				Journal_read_handler;
 		ble_doseIO_J_clear_handler_t 				Journal_clear_handler;
@@ -122,14 +133,16 @@ typedef struct
 /**@brief doseIO Service structure. This structure contains various status information for the service. */
 struct ble_doseIO_s
 {
-    uint16_t                    		service_handle;      			/**< Handle of doseIO Service (as provided by the BLE stack). */
-    ble_gatts_char_handles_t    		synch_time_char_handles;	/**< Handles related to the synch_time Characteristic. */
-		ble_gatts_char_handles_t    		set_notif_char_handles;		/**< Handles related to the set_notif Characteristic. */
-    ble_gatts_char_handles_t    		button_char_handles; 			/**< Handles related to the Button Characteristic. */
-		ble_gatts_char_handles_t    		button_char_handles2; 		/**< Handles related to the Button Characteristic. */
-    uint8_t                     		uuid_type;           			/**< UUID type for the doseIO Service. */
-    ble_doseIO_synch_time_handler_t synch_time_handler;   		/**< Event handler to be called when the synch_time Characteristic is written. */
-		ble_doseIO_set_notif_handler_t 	set_notif_handler;   			/**< Event handler to be called when the set_notif Characteristic is written. */
+    uint16_t                    					service_handle;      			
+		uint8_t                     					uuid_type;           			
+    ble_gatts_char_handles_t    					write_password_handles;				
+		ble_gatts_char_handles_t    					set_name_handles;				
+    ble_gatts_char_handles_t    					device_reset_handles; 		
+		ble_gatts_char_handles_t    					led_settings_handles; 		
+    ble_doseIO_S_write_password_handler_t write_password_handler;   		
+		ble_doseIO_S_set_name_handler_t 			set_name_handler;   			
+		ble_doseIO_S_device_reset_handler_t		device_reset_handler;
+		ble_doseIO_S_led_settings_handler_t		led_settings_handler;
 };
 
 struct ble_doseIO_Journal_s

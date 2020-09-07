@@ -146,6 +146,9 @@ uint16_t OPEN_DATA_HYST = 2;
 
 struct tm* tm_data = 0;
 
+#define SettingsADDR 			0x6A000
+#define SettingsCopyADDR 	0x6B000
+
 #define JournalADDR 			0x6C000
 #define JournalCopyADDR 	0x6D000
 
@@ -301,7 +304,7 @@ static void advertising_init(void)
     ble_advdata_t advdata;
     ble_advdata_t srdata;
 
-    ble_uuid_t adv_uuids[] = {{doseIO_UUID_SERVICE, m_doseIO.uuid_type}};
+    ble_uuid_t adv_uuids[] = {{doseIO_UUID_S_SERVICE, m_doseIO.uuid_type}};
 
     // Build and set advertising data.
     memset(&advdata, 0, sizeof(advdata));
@@ -410,6 +413,25 @@ static void set_notif_handler(uint16_t conn_handle, ble_doseIO_t * p_doseIO, uin
 	}
 }
 
+static void doseIO_S_device_reset_handler (uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data)
+{
+	
+}
+
+static void doseIO_S_write_password_handler (uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data)
+{
+	
+}
+
+static void doseIO_S_led_settings_handler (uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data)
+{
+	
+}
+
+static void doseIO_S_set_name_handler (uint16_t conn_handle, ble_doseIO_t * p_doseIO, uint32_t data)
+{
+	
+}
 
 static void doseIO_J_read_handler (uint16_t conn_handle, ble_doseIO_Journal_t * p_doseIO_Journal, uint32_t data)
 {
@@ -511,8 +533,10 @@ static void services_init(void)
     APP_ERROR_CHECK(err_code);
 
     // Initialize doseIO.
-    init.synch_time_handler = synch_time_handler;
-		init.set_notif_handler = set_notif_handler;
+    init.device_reset_handler = doseIO_S_device_reset_handler;
+		init.led_settings_handler = doseIO_S_led_settings_handler;
+		init.set_name_handler = doseIO_S_set_name_handler;
+		init.write_password_handler = doseIO_S_write_password_handler;
 		
 		init.Journal_read_handler = doseIO_J_read_handler;
 		init.Journal_clear_handler = doseIO_J_clear_handler;
@@ -522,8 +546,8 @@ static void services_init(void)
 		init.Calendare_clear_notif_handler = doseIO_C_clear_notif_handler;
 		init.Calendare_list_notif_handler = doseIO_C_list_notif_handler;
 
-//    err_code = ble_doseIO_init_s_settings(&m_doseIO, &init);
-//    APP_ERROR_CHECK(err_code);
+    err_code = ble_doseIO_init_s_settings(&m_doseIO, &init);
+    APP_ERROR_CHECK(err_code);
 		
 		err_code = ble_doseIO_init_s_journal(&m_doseIO_Journal, &init);
     APP_ERROR_CHECK(err_code);
@@ -883,14 +907,14 @@ static void idle_state_handle(void)
 			uint16_t len = 0;
 			tm_data = nrf_cal_get_time();
 			
-			len = sizeof(ADC_DATA_RAW[0][0]);
-			memset(&params, 0, sizeof(params));
-			params.type   = BLE_GATT_HVX_NOTIFICATION;
-			params.handle = m_doseIO.button_char_handles.value_handle;
-			params.p_data = (uint8_t*)&ADC_DATA_RAW[0][1];
-			params.p_len  = &len;
+//			len = sizeof(ADC_DATA_RAW[0][0]);
+//			memset(&params, 0, sizeof(params));
+//			params.type   = BLE_GATT_HVX_NOTIFICATION;
+//			params.handle = m_doseIO.button_char_handles.value_handle;
+//			params.p_data = (uint8_t*)&ADC_DATA_RAW[0][1];
+//			params.p_len  = &len;
 
-			sd_ble_gatts_hvx(m_conn_handle, &params);
+//			sd_ble_gatts_hvx(m_conn_handle, &params);
 			
 			for(uint8_t i = 0; i < 5; i++)
 			{
@@ -904,14 +928,14 @@ static void idle_state_handle(void)
 				}
 				BatVoltag = BatVoltagMinCount;
 			}
-			len = sizeof(BatVoltag);
-			memset(&params, 0, sizeof(params));
-			params.type   = BLE_GATT_HVX_NOTIFICATION;
-			params.handle = m_doseIO.button_char_handles2.value_handle;
-			params.p_data = (uint8_t*)&CaseOpen;
-			params.p_len  = &len;
-			
-			sd_ble_gatts_hvx(m_conn_handle, &params);
+//			len = sizeof(BatVoltag);
+//			memset(&params, 0, sizeof(params));
+//			params.type   = BLE_GATT_HVX_NOTIFICATION;
+//			params.handle = m_doseIO.button_char_handles2.value_handle;
+//			params.p_data = (uint8_t*)&CaseOpen;
+//			params.p_len  = &len;
+//			
+//			sd_ble_gatts_hvx(m_conn_handle, &params);
 		}
 		
 		ble_gatts_value_t gatts_value;
