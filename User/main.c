@@ -165,17 +165,17 @@ typedef enum{
 	EVENT_NONE = 255
 }e_TypeEvent;
 
-typedef struct __attribute__ ((aligned(32))){
+typedef struct __attribute__ ((aligned(4))){
 	e_TypeEvent		TypeEvent;
 	time_t 				Time;
 	uint32_t			Value;
 }s_JournalData;
 
-typedef struct __attribute__ ((aligned(32))){
+typedef struct __attribute__ ((aligned(4))){
 	s_JournalData Data[JournalLengthMAX];
 }s_Journal;
 
-typedef struct __attribute__ ((aligned(32))){
+typedef struct __attribute__ ((aligned(4))){
 	time_t Time[ListNotifMAX];
 }s_ListNotif;
 
@@ -185,7 +185,13 @@ uint32_t JournalPointer = 0;
 #define ListNotif ((s_ListNotif*)ListNotifADDR)
 uint32_t ListNotifPointer = 0;
 
+#define JournalNewEventBufferMAX 10
+
 static uint16_t CaseOpen, lastStateCase;
+volatile static struct{ 
+uint8_t busy;
+s_JournalData Event;
+}JournalNewEventBuffer[JournalNewEventBufferMAX] = {0};
 
 /**@brief Struct that contains pointers to the encoded advertising data. */
 static ble_gap_adv_data_t m_adv_data =
@@ -405,18 +411,14 @@ static void set_notif_handler(uint16_t conn_handle, ble_doseIO_t * p_doseIO, uin
 }
 
 
-static void doseIO_Journal_data_handler (ble_doseIO_Journal_t * p_doseIO_Journal)
-{
-	
-}
-
 static void doseIO_J_read_handler (uint16_t conn_handle, ble_doseIO_Journal_t * p_doseIO_Journal, uint32_t data)
 {
-	
+	ble_J_read_data_send(&m_doseIO_Journal,(uint8_t*)&Journal->Data[0].TypeEvent, (uint16_t)data&0xffff, (uint16_t)JournalLengthMAX,m_conn_handle);
 }
 
 static void doseIO_J_clear_handler (uint16_t conn_handle, ble_doseIO_Journal_t * p_doseIO_Journal, uint32_t data)
 {
+	volatile uint32_t err_code;
 	if(data >= JournalLengthMAX)
 	{
 		sd_flash_page_erase((uint32_t)(&Journal->Data[0])/0x1000);
@@ -425,7 +427,6 @@ static void doseIO_J_clear_handler (uint16_t conn_handle, ble_doseIO_Journal_t *
 	else
 	{
 		volatile s_JournalData JournalDataClear = {0};
-		volatile uint32_t err_code;
 		if(Journal->Data[data].Time != 0xffffffff)err_code = sd_flash_write(&Journal->Data[data].Time,(uint32_t const *)&JournalDataClear,3);
 		if(ListNotifPointer == data) ListNotifPointer++;
 	}
@@ -438,26 +439,37 @@ static void doseIO_C_time_synch_handler (uint16_t conn_handle, ble_doseIO_Calend
 
 static void doseIO_C_write_notif_handler (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data)
 {
+	volatile uint32_t err_code;
 	if(ListNotifPointer < ListNotifMAX)
 	{
 		volatile static uint32_t data_copy = 0;
+		
 		data_copy = data;
 		//flash_write_words((uint32_t)&ListNotif->Time[ListNotifPointer],data);
-		volatile uint32_t err_code;
 		err_code = sd_flash_write(&ListNotif->Time[ListNotifPointer],(uint32_t const *)&data_copy,1);
 		
 		ListNotifPointer++;
 		
-		volatile s_JournalData JournalNewEvent = {0};
+		for(uint8_t i = 0; i < JournalNewEventBufferMAX; i++)
+		{
+			if(JournalNewEventBuffer[i].busy == 0)
+			{
+				JournalNewEventBuffer[i].busy = 1;
+				JournalNewEventBuffer[i].Event.Time = nrf_cal_get_time_Unix();
+				JournalNewEventBuffer[i].Event.TypeEvent = EVENT_SET_NOTIFICATION;
+				JournalNewEventBuffer[i].Event.Value = data_copy;
+				break;
+			}
+		}
 		
-		JournalNewEvent.Time = nrf_cal_get_time_Unix();
-		
-		JournalNewEvent.TypeEvent = EVENT_SET_NOTIFICATION;
-		JournalNewEvent.Value = data_copy;
-		
-		sd_flash_write((uint32_t *)JournalADDR+(JournalPointer*3),(uint32_t const *)&JournalNewEvent, 3);
-		
-		JournalPointer++;
+//		JournalNewEvent.Time = nrf_cal_get_time_Unix();
+//		
+//		JournalNewEvent.TypeEvent = EVENT_SET_NOTIFICATION;
+//		JournalNewEvent.Value = data_copy;
+//		
+//		err_code = sd_flash_write((uint32_t *)&Journal->Data[JournalPointer],(uint32_t const *)&JournalNewEvent, 3);
+//		
+//		JournalPointer++;
 	}
 }
 
@@ -479,16 +491,7 @@ static void doseIO_C_clear_notif_handler (uint16_t conn_handle, ble_doseIO_Calen
 
 static void doseIO_C_list_notif_handler (uint16_t conn_handle, ble_doseIO_Calendare_t * p_doseIO_Calendare, uint32_t data)
 {
-	volatile uint16_t dataLength = (uint16_t)data&0xffff;
-	
-	if(dataLength >= ListNotifMAX)
-	{
-		dataLength = ListNotifMAX;
-	}
-	
-	dataLength *= sizeof(uint32_t);
-	
-	ble_list_notif_data_send(&m_doseIO_Calendare,(uint8_t*)&ListNotif->Time[0],(uint16_t*)&dataLength,m_conn_handle);
+	ble_list_notif_data_send(&m_doseIO_Calendare,(uint8_t*)&ListNotif->Time[0],(uint16_t)data&0xffff,ListNotifMAX,m_conn_handle);
 }
 
 
@@ -519,8 +522,8 @@ static void services_init(void)
 		init.Calendare_clear_notif_handler = doseIO_C_clear_notif_handler;
 		init.Calendare_list_notif_handler = doseIO_C_list_notif_handler;
 
-    err_code = ble_doseIO_init_s_settings(&m_doseIO, &init);
-    APP_ERROR_CHECK(err_code);
+//    err_code = ble_doseIO_init_s_settings(&m_doseIO, &init);
+//    APP_ERROR_CHECK(err_code);
 		
 		err_code = ble_doseIO_init_s_journal(&m_doseIO_Journal, &init);
     APP_ERROR_CHECK(err_code);
@@ -791,7 +794,24 @@ static void power_management_init(void)
 
 static void idle_state_handle(void)
 {
+	volatile uint32_t err_code;
 	CaseOpen = nrf_gpio_pin_read(27);
+	
+	for(volatile uint8_t i = 0; i < JournalNewEventBufferMAX; i++)
+	{
+		if(JournalNewEventBuffer[i].busy == 1)
+		{
+			err_code = sd_flash_write((uint32_t *)&Journal->Data[JournalPointer],(uint32_t const *)&JournalNewEventBuffer[i].Event, 3);
+			
+			if(err_code == NRF_SUCCESS)
+			{
+				JournalPointer++;
+				JournalNewEventBuffer[i].busy = 0;
+			}
+			
+			break;
+		}
+	}
 	
 	if(CaseOpen != lastStateCase)
 	{
@@ -808,7 +828,7 @@ static void idle_state_handle(void)
 			JournalNewEvent.TypeEvent = EVENT_CASE_CLOSE;
 		}
 		
-		sd_flash_write((uint32_t *)JournalADDR+(JournalPointer*3),(uint32_t const *)&JournalNewEvent, 3);
+		sd_flash_write((uint32_t *)&Journal->Data[JournalPointer],(uint32_t const *)&JournalNewEvent, 3);
 		
 		JournalPointer++;
 		
@@ -1138,7 +1158,7 @@ int main(void)
 		
 		if(JournalPointer == 0)
 		{
-			for(uint32_t i = 0; i < (0x1000/32); i++)
+			for(volatile uint32_t i = 0; i < (0x1000/32); i++)
 			{
 				if(Journal->Data[i].TypeEvent == EVENT_NONE)
 				{
