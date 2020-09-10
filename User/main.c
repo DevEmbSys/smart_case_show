@@ -819,7 +819,16 @@ static void power_management_init(void)
 static void idle_state_handle(void)
 {
 	volatile uint32_t err_code;
-	CaseOpen = nrf_gpio_pin_read(27);
+	//CaseOpen = nrf_gpio_pin_read(27);
+	
+	if(ADC_DATA_RAW[0][0] < 0x300)
+	{
+		CaseOpen = 1;
+	}
+	else
+	{
+		CaseOpen = 0;
+	}
 	
 	for(volatile uint8_t i = 0; i < JournalNewEventBufferMAX; i++)
 	{
@@ -1147,7 +1156,8 @@ int main(void)
 		volatile uint8_t EraseJournalFlag = 0;
 		volatile uint8_t EraseListNotifFlag = 0;
 	
-		CaseOpen = nrf_gpio_pin_read(27);
+		//CaseOpen = nrf_gpio_pin_read(27);
+		CaseOpen = 0;
 		lastStateCase = CaseOpen;
 		if(EraseListNotifFlag == 1)
 		{
